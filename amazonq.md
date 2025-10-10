@@ -2,7 +2,7 @@
 
 In our team, there are several fundamental aspects that **must be strictly followed** to ensure clean, readable, and maintainable code.
 
-## APP       : Overture v4.0 (part of Sweeppea Suite)
+## APP       : N8N Nodes (part of Sweeppea Suite)
 ## Framework : Vue2 with Vuetify2
 ## Backend   : NodeJS
 
