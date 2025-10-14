@@ -78,6 +78,12 @@ export class Sweeppea implements INodeType {
 					},
 				},
 				options: [
+				{
+					name        : 'Get Schema',
+					value       : 'getSchema',
+					description : 'Get the required fields for a sweepstake (useful for dynamic forms/chatbots)',
+					action      : 'Get sweepstake schema',
+				},
 					{
 						name        : 'Create',
 						value       : 'create',
@@ -95,7 +101,7 @@ export class Sweeppea implements INodeType {
 				displayOptions : {
 					show: {
 						resource  : ['participant'],
-						operation : ['create'],
+						operation : ['getSchema', 'create'],
 					},
 				},
 				default     : '',
@@ -111,7 +117,7 @@ export class Sweeppea implements INodeType {
 				displayOptions : {
 					show: {
 						resource  : ['participant'],
-						operation : ['create'],
+						operation : ['getSchema', 'create'],
 					},
 				},
 				options: [
@@ -159,7 +165,75 @@ export class Sweeppea implements INodeType {
 
 		if (resource === 'participant') {
 
-			if (operation === 'create') {
+			
+		if (operation === 'getSchema') {
+
+			/* Get Schema Operation - Returns Fields Structure */
+			for (let i = 0; i < items.length; i++) {
+
+				try {
+
+					const sweepstakeId = this.getNodeParameter('sweepstakeId', i) as string;
+
+					/* Fetch Sweepstake Schema */
+					const schemaUrl      = `${baseUrl}/api-v1/n8n/sweepstakes/${sweepstakeId}/schema`;
+					const schemaResponse = await this.helpers.httpRequestWithAuthentication.call(
+						this,
+						'sweeppeaApi',
+						{
+							method : 'GET',
+							url    : schemaUrl,
+							json   : true,
+						},
+					);
+
+					if (!schemaResponse.success) {
+
+						throw new NodeOperationError(
+							this.getNode(),
+							`Failed to fetch sweepstake schema: ${schemaResponse.message || 'Unknown error'}`,
+							{ itemIndex: i },
+						);
+					}
+
+					/* Return Schema Data */
+					returnData.push({
+						json       : schemaResponse as IDataObject,
+						pairedItem : { item: i },
+					});
+
+				} catch (error) {
+
+					/* Handle API-Specific Errors */
+					if (error.httpCode === 404) {
+
+						throw new NodeOperationError(
+							this.getNode(),
+							`Sweepstake not found. Please verify the Sweepstake ID is correct.`,
+							{ itemIndex: i },
+						);
+					}
+
+					/* If Continue On Fail Is Enabled, Add Error To Result */
+					if (this.continueOnFail()) {
+
+						returnData.push({
+							json: {
+								error     : error.message,
+								itemIndex : i,
+							},
+							pairedItem: { item: i },
+						});
+
+						continue;
+					}
+
+					/* Re-Throw Error If Cannot Handle */
+					throw error;
+				}
+			}
+
+		} else if (operation === 'create') {
 
 				/* Process Each Item In The Workflow */
 				for (let i = 0; i < items.length; i++) {
