@@ -327,6 +327,82 @@ app.get('/api-v1/n8n/sweepstakes/:sweepstakeId/schema', authenticateApiKey, (_re
 });
 
 /*
+ * Endpoint Used To Check If Email Or Phone Already Exists In Sweepstake
+ */
+app.get('/api-v1/n8n/sweepstakes/:sweepstakeId/participants/check', authenticateApiKey, (_req, _res) => {
+
+	const { sweepstakeId } = _req.params;
+	const { email, phone } = _req.query;
+
+	/* Validate That At Least One Parameter Is Provided */
+	if (!email && !phone) {
+
+		return _res.status(400).json({
+			success : false,
+			error   : 'Bad Request',
+			message : 'Email or phone query parameter is required'
+		});
+	}
+
+	/* Validate Phone Format If Provided */
+	if (phone && phone.length !== 10) {
+
+		return _res.status(400).json({
+			success : false,
+			error   : 'Bad Request',
+			message : 'Phone number must be exactly 10 characters'
+		});
+	}
+
+	/* Check If Sweepstake Exists */
+	const sweepstake = sweepstakes[sweepstakeId];
+
+	if (!sweepstake) {
+
+		return _res.status(404).json({
+			success : false,
+			error   : 'Not Found',
+			message : `Sweepstake '${sweepstakeId}' not found`
+		});
+	}
+
+	/* Check If Email Or Phone Exists In This Sweepstake */
+	let existing = null;
+
+	if (email) {
+
+		existing = participants.find(
+			_p => _p.sweepstakeId === sweepstakeId && _p.data.email && _p.data.email.toLowerCase() === email.toLowerCase()
+		);
+	}
+
+	if (!existing && phone) {
+
+		existing = participants.find(
+			_p => _p.sweepstakeId === sweepstakeId && _p.data.phone === phone
+		);
+	}
+
+	if (existing) {
+
+		/* Return TRUE - Participant Already Exists */
+		return _res.json({
+			success        : true,
+			exists         : true,
+			participantId  : existing.participantId,
+			entryNumber    : existing.entryNumber,
+			createdAt      : existing.createdAt
+		});
+	}
+
+	/* Return FALSE - Participant Does NOT Exist */
+	return _res.json({
+		success : true,
+		exists  : false
+	});
+});
+
+/*
  * Endpoint Used To Create Participant
  */
 app.post('/api-v1/n8n/participants', authenticateApiKey, (_req, _res) => {

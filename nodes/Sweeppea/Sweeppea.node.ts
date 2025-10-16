@@ -84,6 +84,12 @@ export class Sweeppea implements INodeType {
 					description : 'Get the required fields for a sweepstake (useful for dynamic forms/chatbots)',
 					action      : 'Get sweepstake schema',
 				},
+			{
+				name        : 'Check Participant',
+				value       : 'checkParticipant',
+				description : 'Check if an email is already registered in a sweepstake',
+				action      : 'Check if participant exists',
+			},
 					{
 						name        : 'Create',
 						value       : 'create',
@@ -101,13 +107,28 @@ export class Sweeppea implements INodeType {
 				displayOptions : {
 					show: {
 						resource  : ['participant'],
-						operation : ['getSchema', 'create'],
+						operation : ['getSchema', 'checkParticipant', 'create'],
 					},
 				},
 				default     : '',
 				placeholder : 'summer_2025',
 				description : 'The unique identifier of the sweepstake',
 			},
+		{
+			displayName    : 'Email or Phone',
+			name           : 'emailOrPhone',
+			type           : 'string',
+			required       : true,
+			displayOptions : {
+				show: {
+					resource  : ['participant'],
+					operation : ['checkParticipant'],
+				},
+			},
+			default     : '',
+			placeholder : 'user@example.com or 5551234567',
+			description : 'The email address or phone number (10 digits) to check',
+		},
 			{
 				displayName    : 'Additional Fields',
 				name           : 'additionalFields',
@@ -117,7 +138,7 @@ export class Sweeppea implements INodeType {
 				displayOptions : {
 					show: {
 						resource  : ['participant'],
-						operation : ['getSchema', 'create'],
+						operation : ['getSchema', 'checkParticipant', 'create'],
 					},
 				},
 				options: [
@@ -210,6 +231,98 @@ export class Sweeppea implements INodeType {
 						throw new NodeOperationError(
 							this.getNode(),
 							`Sweepstake not found. Please verify the Sweepstake ID is correct.`,
+							{ itemIndex: i },
+						);
+					}
+
+					/* If Continue On Fail Is Enabled, Add Error To Result */
+					if (this.continueOnFail()) {
+
+						returnData.push({
+							json: {
+								error     : error.message,
+								itemIndex : i,
+							},
+							pairedItem: { item: i },
+						});
+
+						continue;
+					}
+
+					/* Re-Throw Error If Cannot Handle */
+					throw error;
+				}
+			}
+
+		} else if (operation === 'checkParticipant') {
+
+			/* Check Participant Operation - Verify If Email Or Phone Exists */
+			for (let i = 0; i < items.length; i++) {
+
+				try {
+
+					const sweepstakeId = this.getNodeParameter('sweepstakeId', i) as string;
+					const emailOrPhone = this.getNodeParameter('emailOrPhone', i) as string;
+
+					/* Determine If Input Is Email Or Phone */
+					const isEmail    = emailOrPhone.includes('@');
+					const queryParam = isEmail ? `email=${encodeURIComponent(emailOrPhone)}` : `phone=${emailOrPhone}`;
+
+					/* Validate Phone Format If Not Email */
+					if (!isEmail && emailOrPhone.length !== 10) {
+
+						throw new NodeOperationError(
+							this.getNode(),
+							`Phone number must be exactly 10 digits. Received: ${emailOrPhone.length} characters.`,
+							{ itemIndex: i },
+						);
+					}
+
+					/* Call Check Participant Endpoint */
+					const checkUrl      = `${baseUrl}/api-v1/n8n/sweepstakes/${sweepstakeId}/participants/check?${queryParam}`;
+					const checkResponse = await this.helpers.httpRequestWithAuthentication.call(
+						this,
+						'sweeppeaApi',
+						{
+							method : 'GET',
+							url    : checkUrl,
+							json   : true,
+						},
+					);
+
+					if (!checkResponse.success) {
+
+						throw new NodeOperationError(
+							this.getNode(),
+							`Failed to check participant: ${checkResponse.message || 'Unknown error'}`,
+							{ itemIndex: i },
+						);
+					}
+
+					/* Return Check Result */
+					returnData.push({
+						json       : checkResponse as IDataObject,
+						pairedItem : { item: i },
+					});
+
+				} catch (error) {
+
+					/* Handle API-Specific Errors */
+					if (error.httpCode === 404) {
+
+						throw new NodeOperationError(
+							this.getNode(),
+							`Sweepstake not found. Please verify the Sweepstake ID is correct.`,
+							{ itemIndex: i },
+						);
+
+					} else if (error.httpCode === 400) {
+
+						const errorMessage = error.response?.body?.message || 'Bad Request';
+
+						throw new NodeOperationError(
+							this.getNode(),
+							errorMessage,
 							{ itemIndex: i },
 						);
 					}
