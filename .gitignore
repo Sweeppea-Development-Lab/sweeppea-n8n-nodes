@@ -29,3 +29,7 @@ coverage/
 
 # N8N
 .n8n/
+
+# Claude Code
+.claude/
+CLAUDE.md

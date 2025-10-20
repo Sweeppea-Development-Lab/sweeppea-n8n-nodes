@@ -1,0 +1,26 @@
+{
+	"node": "n8n-nodes-base.sweeppea",
+	"nodeVersion": "1.0",
+	"codexVersion": "1.0",
+	"categories": [
+		"Marketing & Content"
+	],
+	"resources": {
+		"credentialDocumentation": [
+			{
+				"url": "https://docs.sweeppea.com/authentication"
+			}
+		],
+		"primaryDocumentation": [
+			{
+				"url": "https://docs.sweeppea.com"
+			}
+		]
+	},
+	"alias": [
+		"sweepstakes",
+		"giveaway",
+		"lottery",
+		"raffle"
+	]
+}
