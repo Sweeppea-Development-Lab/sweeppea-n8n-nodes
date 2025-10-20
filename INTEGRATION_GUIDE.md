@@ -1,63 +1,63 @@
-# 🎯 Guía Completa de Integración - Sweeppea N8N Node
+# 🎯 Complete Integration Guide - Sweeppea N8N Node
 
-## 📖 Tabla de Contenidos
+## 📖 Table of Contents
 
-1. [¿Qué es esta integración?](#qué-es-esta-integración)
-2. [Arquitectura del Sistema](#arquitectura-del-sistema)
-3. [Flujo Completo Paso a Paso](#flujo-completo-paso-a-paso)
-4. [Endpoints de la API](#endpoints-de-la-api)
-5. [Cómo Funciona el Nodo](#cómo-funciona-el-nodo)
-6. [Guía de Pruebas](#guía-de-pruebas)
-7. [Preguntas Frecuentes](#preguntas-frecuentes)
-
----
-
-## 🎯 ¿Qué es esta integración?
-
-Esta integración permite que **N8N** (una herramienta de automatización) pueda crear participantes en sorteos de **Sweeppea** de manera inteligente y dinámica.
-
-### ¿Por qué es útil?
-
-Imagina que un usuario te escribe por **WhatsApp** diciendo "Quiero participar en el sorteo". Un bot con IA:
-1. Le pregunta qué sorteo quiere
-2. **Automáticamente consulta** qué campos necesita ese sorteo específico
-3. **Le pregunta al usuario** cada campo necesario de manera conversacional
-4. Cuando tiene todos los datos, **crea el participante automáticamente**
-5. Le confirma su número de participación
-
-**SIN** esta integración: Tendrías que programar manualmente cada sorteo con sus campos específicos.
-**CON** esta integración: Un solo workflow funciona para TODOS los sorteos, porque se adapta dinámicamente.
-
-### 💡 Ejemplo Real
-
-**Usuario:** "Hola, quiero participar"
-**Bot:** "¡Genial! ¿En qué sorteo quieres participar?"
-**Usuario:** "Summer Giveaway 2025"
-**Bot:** *(consulta automáticamente qué campos necesita)* "Perfecto. Necesito algunos datos. ¿Cuál es tu email?"
-**Usuario:** "juan@example.com"
-**Bot:** "¿Tu nombre?"
-**Usuario:** "Juan"
-**Bot:** "¿Tu apellido?"
-**Usuario:** "Pérez"
-**Bot:** "¿Tu edad?"
-**Usuario:** "28"
-**Bot:** "¿De qué país eres?"
-**Usuario:** "Argentina"
-**Bot:** *(crea el participante automáticamente)* "¡Listo Juan! Estás registrado en Summer Giveaway 2025 con el número SUMMER_2025-000042"
+1. [What is this integration?](#what-is-this-integration)
+2. [System Architecture](#system-architecture)
+3. [Complete Step-by-Step Flow](#complete-step-by-step-flow)
+4. [API Endpoints](#api-endpoints)
+5. [How the Node Works](#how-the-node-works)
+6. [Testing Guide](#testing-guide)
+7. [Frequently Asked Questions](#frequently-asked-questions)
 
 ---
 
-## 🏗️ Arquitectura del Sistema
+## 🎯 What is this integration?
+
+This integration allows **N8N** (an automation tool) to create participants in **Sweeppea** sweepstakes intelligently and dynamically.
+
+### Why is it useful?
+
+Imagine a user writes you via **WhatsApp** saying "I want to participate in the sweepstakes". An AI bot:
+1. Asks which sweepstakes they want
+2. **Automatically queries** what fields that specific sweepstakes needs
+3. **Asks the user** for each required field conversationally
+4. When it has all the data, **creates the participant automatically**
+5. Confirms their entry number
+
+**WITHOUT** this integration: You would need to manually program each sweepstakes with its specific fields.
+**WITH** this integration: A single workflow works for ALL sweepstakes, because it adapts dynamically.
+
+### 💡 Real Example
+
+**User:** "Hello, I want to participate"
+**Bot:** "Great! Which sweepstakes do you want to enter?"
+**User:** "Summer Giveaway 2025"
+**Bot:** *(automatically queries what fields it needs)* "Perfect. I need some information. What's your email?"
+**User:** "john@example.com"
+**Bot:** "Your first name?"
+**User:** "John"
+**Bot:** "Your last name?"
+**User:** "Smith"
+**Bot:** "Your age?"
+**User:** "28"
+**Bot:** "What country are you from?"
+**User:** "Argentina"
+**Bot:** *(automatically creates the participant)* "Done John! You're registered in Summer Giveaway 2025 with number SUMMER_2025-000042"
+
+---
+
+## 🏗️ System Architecture
 
 ```
 ┌─────────────────┐
 │   WhatsApp      │
-│   (Usuario)     │
+│   (User)        │
 └────────┬────────┘
-         │ "Quiero participar"
+         │ "I want to participate"
          ▼
 ┌─────────────────┐
-│   IA/ChatBot    │
+│   AI/ChatBot    │
 │   (OpenAI, etc) │
 └────────┬────────┘
          │
@@ -69,10 +69,10 @@ Imagina que un usuario te escribe por **WhatsApp** diciendo "Quiero participar e
          │
          ▼
 ┌─────────────────┐
-│  Sweeppea Node  │ ◄── Este es nuestro código
+│  Sweeppea Node  │ ◄── This is our code
 └────────┬────────┘
-         │ 1. Consulta schema
-         │ 2. Crea participante
+         │ 1. Query schema
+         │ 2. Create participant
          ▼
 ┌─────────────────┐
 │  Sweeppea API   │
@@ -80,57 +80,57 @@ Imagina que un usuario te escribe por **WhatsApp** diciendo "Quiero participar e
 └─────────────────┘
 ```
 
-### Componentes:
+### Components:
 
 1. **Mock Server** (`mock-server/server.js`)
-   - Servidor de prueba que simula la API real de Sweeppea
-   - Solo para desarrollo y testing
-   - Corre en `http://localhost:3002`
+   - Test server that simulates the real Sweeppea API
+   - Only for development and testing
+   - Runs on `http://localhost:3002`
 
 2. **Credentials** (`credentials/SweeppeaApi.credentials.ts`)
-   - Maneja la autenticación
-   - Permite elegir ambiente (Production, Staging, Development)
+   - Handles authentication
+   - Allows environment selection (Production, Staging, Development)
 
 3. **Node** (`nodes/Sweeppea/Sweeppea.node.ts`)
-   - El nodo que ves en N8N
-   - Hace toda la lógica de comunicación con la API
+   - The node you see in N8N
+   - Contains all the logic for communicating with the API
 
 ---
 
-## 🔄 Flujo Completo Paso a Paso
+## 🔄 Complete Step-by-Step Flow
 
-### Escenario Real: Usuario conversa por WhatsApp para participar en "Summer Giveaway 2025"
+### Real Scenario: User converses via WhatsApp to participate in "Summer Giveaway 2025"
 
-#### **PASO 1: Usuario inicia conversación por WhatsApp**
+#### **STEP 1: User initiates conversation via WhatsApp**
 
-**Usuario escribe:**
+**User writes:**
 ```
-"Hola, quiero participar en Summer Giveaway 2025"
+"Hello, I want to participate in Summer Giveaway 2025"
 ```
 
-El mensaje llega a N8N a través de un webhook de WhatsApp (o Evolution API, etc.)
+The message arrives at N8N through a WhatsApp webhook (or Evolution API, etc.)
 
-#### **PASO 2: IA/Bot consulta qué campos necesita el sorteo**
+#### **STEP 2: AI/Bot queries what fields the sweepstakes needs**
 
-Antes de preguntarle NADA al usuario, el bot necesita saber qué campos pedir. Aquí es donde usamos nuestro nodo.
+Before asking the user ANYTHING, the bot needs to know what fields to request. This is where we use our node.
 
-**El workflow de N8N:**
-1. Recibe el mensaje "Quiero participar en Summer Giveaway 2025"
-2. Identifica que el sorteo es `summer_2025`
-3. **Usa el nodo Sweeppea solo para CONSULTAR el schema** (no para crear todavía)
+**The N8N workflow:**
+1. Receives the message "I want to participate in Summer Giveaway 2025"
+2. Identifies that the sweepstakes is `summer_2025`
+3. **Uses the Sweeppea node just to QUERY the schema** (not to create yet)
 
-**Configuración temporal del nodo para consulta:**
+**Temporary node configuration for query:**
 - **Sweepstake ID**: `summer_2025`
-- **Credentials**: Configuradas
-- Solo queremos el schema, no crear participante aún
+- **Credentials**: Configured
+- We only want the schema, not to create participant yet
 
-> **IMPORTANTE:** En este paso NO creamos el participante. Solo consultamos qué campos necesitamos.
+> **IMPORTANT:** In this step we DON'T create the participant. We only query what fields we need.
 
-#### **PASO 3: N8N/Workflow consulta el schema del sorteo**
+#### **STEP 3: N8N/Workflow queries the sweepstakes schema**
 
-**¿Por qué?** Porque necesitamos saber qué preguntarle al usuario.
+**Why?** Because we need to know what to ask the user.
 
-N8N hace una petición HTTP (no necesitas el nodo de Sweeppea para esto, es solo un HTTP Request):
+N8N makes an HTTP request (you don't need the Sweeppea node for this, it's just an HTTP Request):
 
 **REQUEST:**
 ```http
@@ -155,71 +155,71 @@ Authorization: Bearer sk_test_mock123456789
 }
 ```
 
-#### **PASO 4: IA/Bot interpreta el schema y comienza conversación**
+#### **STEP 4: AI/Bot interprets the schema and begins conversation**
 
-La IA ahora sabe que necesita 5 campos required: email, firstName, lastName, age, country.
+The AI now knows it needs 5 required fields: email, firstName, lastName, age, country.
 
-**Bot responde al usuario por WhatsApp:**
+**Bot responds to user via WhatsApp:**
 ```
-"¡Perfecto Juan! Para registrarte en Summer Giveaway 2025, necesito algunos datos.
-¿Cuál es tu email?"
-```
-
-#### **PASO 5: Usuario responde los campos uno por uno**
-
-**Conversación:**
-
-```
-Bot: "¿Cuál es tu email?"
-Usuario: "juan@example.com"
-
-Bot: "¿Tu nombre?"
-Usuario: "Juan"
-
-Bot: "¿Tu apellido?"
-Usuario: "Pérez"
-
-Bot: "¿Tu edad?"
-Usuario: "28"
-
-Bot: "¿De qué país eres?"
-Usuario: "Argentina"
-
-Bot: "¿Quieres recibir nuestro newsletter? (opcional)"
-Usuario: "Sí"
+"Perfect John! To register you in Summer Giveaway 2025, I need some information.
+What's your email?"
 ```
 
-**El workflow de N8N va guardando cada respuesta** en variables o en una base de datos temporal.
+#### **STEP 5: User responds to fields one by one**
 
-#### **PASO 6: Cuando se tienen TODOS los datos, se crea el participante**
+**Conversation:**
 
-Ahora SÍ usamos el **nodo de Sweeppea** para crear el participante.
+```
+Bot: "What's your email?"
+User: "john@example.com"
 
-**El workflow envía a nuestro nodo:**
+Bot: "Your first name?"
+User: "John"
+
+Bot: "Your last name?"
+User: "Smith"
+
+Bot: "Your age?"
+User: "28"
+
+Bot: "What country are you from?"
+User: "Argentina"
+
+Bot: "Do you want to receive our newsletter? (optional)"
+User: "Yes"
+```
+
+**The N8N workflow saves each response** in variables or in a temporary database.
+
+#### **STEP 6: When we have ALL the data, create the participant**
+
+Now we DO use the **Sweeppea node** to create the participant.
+
+**The workflow sends to our node:**
 ```json
 {
   "sweepstakeId": "summer_2025",
-  "email": "juan@example.com",
-  "firstName": "Juan",
-  "lastName": "Pérez",
+  "email": "john@example.com",
+  "firstName": "John",
+  "lastName": "Smith",
   "age": 28,
   "country": "Argentina",
   "newsletter": true
 }
 ```
 
-**El nodo de Sweeppea:**
-1. Valida que todos los campos requeridos estén presentes
-2. Hace el POST a la API:
+**The Sweeppea node:**
+1. Validates that all required fields are present
+2. Makes the POST to the API:
 
 ```http
 POST /api-v1/n8n/participants
 {
   "sweepstakeId": "summer_2025",
   "data": {
-    "email": "juan@example.com",
-    "firstName": "Juan",
-    "lastName": "Pérez",
+    "email": "john@example.com",
+    "firstName": "John",
+    "lastName": "Smith",
     "age": 28,
     "country": "Argentina",
     "newsletter": true
@@ -227,7 +227,7 @@ POST /api-v1/n8n/participants
 }
 ```
 
-**API responde:**
+**API responds:**
 ```json
 {
   "success": true,
@@ -237,48 +237,48 @@ POST /api-v1/n8n/participants
 }
 ```
 
-#### **PASO 7: Bot confirma al usuario**
+#### **STEP 7: Bot confirms to user**
 
-**Bot envía mensaje final por WhatsApp:**
+**Bot sends final message via WhatsApp:**
 ```
-"¡Listo Juan! 🎉
+"Done John! 🎉
 
-Estás registrado en Summer Giveaway 2025
-Tu número de participación es: SUMMER_2025-000042
+You're registered in Summer Giveaway 2025
+Your entry number is: SUMMER_2025-000042
 
-¡Mucha suerte! 🍀"
+Good luck! 🍀"
 ```
 
-### 🎯 ¿Por qué este flujo es PERFECTO?
+### 🎯 Why this flow is PERFECT?
 
-1. ✅ **Dinámico**: Si mañana creas un sorteo con otros campos, el mismo workflow funciona
-2. ✅ **Conversacional**: El usuario no llena formularios aburridos
-3. ✅ **Inteligente**: La IA puede validar respuestas y pedir aclaraciones
-4. ✅ **Flexible**: Funciona con WhatsApp, Telegram, Discord, cualquier chat
-5. ✅ **Escalable**: Un solo bot atiende TODOS tus sorteos
+1. ✅ **Dynamic**: If tomorrow you create a sweepstakes with other fields, the same workflow works
+2. ✅ **Conversational**: User doesn't fill boring forms
+3. ✅ **Intelligent**: AI can validate responses and ask for clarifications
+4. ✅ **Flexible**: Works with WhatsApp, Telegram, Discord, any chat
+5. ✅ **Scalable**: A single bot handles ALL your sweepstakes
 
 ---
 
-## 🔌 Endpoints de la API
+## 🔌 API Endpoints
 
-### 1. **GET Schema** - Obtener campos del sorteo
+### 1. **GET Schema** - Get sweepstakes fields
 
 **Endpoint:** `GET /api-v1/n8n/sweepstakes/:sweepstakeId/schema`
 
-**Propósito:** Saber qué campos necesitas enviar para crear un participante en ese sorteo específico.
+**Purpose:** Know what fields you need to send to create a participant in that specific sweepstakes.
 
 **Headers:**
 ```
 Authorization: Bearer sk_test_mock123456789
 ```
 
-**Ejemplo de uso:**
+**Usage example:**
 ```bash
 curl -H "Authorization: Bearer sk_test_mock123456789" \
   http://localhost:3002/api-v1/n8n/sweepstakes/summer_2025/schema
 ```
 
-**Respuesta exitosa (200):**
+**Successful response (200):**
 ```json
 {
   "success": true,
@@ -288,20 +288,20 @@ curl -H "Authorization: Bearer sk_test_mock123456789" \
 }
 ```
 
-**Errores posibles:**
+**Possible errors:**
 
-| Código | Error | Razón |
-|--------|-------|-------|
-| 401 | Unauthorized | API key inválida o faltante |
-| 404 | Not Found | El sweepstakeId no existe |
+| Code | Error | Reason |
+|------|-------|--------|
+| 401 | Unauthorized | Invalid or missing API key |
+| 404 | Not Found | The sweepstakeId doesn't exist |
 
 ---
 
-### 2. **POST Participant** - Crear participante
+### 2. **POST Participant** - Create participant
 
 **Endpoint:** `POST /api-v1/n8n/participants`
 
-**Propósito:** Crear un nuevo participante en un sorteo.
+**Purpose:** Create a new participant in a sweepstakes.
 
 **Headers:**
 ```
@@ -314,9 +314,9 @@ Content-Type: application/json
 {
   "sweepstakeId": "summer_2025",
   "data": {
-    "email": "usuario@example.com",
-    "firstName": "Nombre",
-    "lastName": "Apellido",
+    "email": "user@example.com",
+    "firstName": "First",
+    "lastName": "Last",
     "age": 25,
     "country": "Argentina",
     "newsletter": true
@@ -324,7 +324,7 @@ Content-Type: application/json
 }
 ```
 
-**Ejemplo de uso:**
+**Usage example:**
 ```bash
 curl -X POST http://localhost:3002/api-v1/n8n/participants \
   -H "Authorization: Bearer sk_test_mock123456789" \
@@ -333,15 +333,15 @@ curl -X POST http://localhost:3002/api-v1/n8n/participants \
     "sweepstakeId": "summer_2025",
     "data": {
       "email": "test@example.com",
-      "firstName": "Juan",
-      "lastName": "Pérez",
+      "firstName": "John",
+      "lastName": "Doe",
       "age": 25,
       "country": "Argentina"
     }
   }'
 ```
 
-**Respuesta exitosa (201):**
+**Successful response (201):**
 ```json
 {
   "success": true,
@@ -352,15 +352,15 @@ curl -X POST http://localhost:3002/api-v1/n8n/participants \
 }
 ```
 
-**Errores posibles:**
+**Possible errors:**
 
-| Código | Error | Razón | Solución |
-|--------|-------|-------|----------|
-| 400 | Validation Failed | Falta un campo requerido o validación falló | Verificar que todos los campos required estén presentes |
-| 404 | Not Found | El sweepstakeId no existe | Usar un sweepstakeId válido |
-| 409 | Conflict | Email duplicado | El email ya participó en este sorteo |
+| Code | Error | Reason | Solution |
+|------|-------|--------|----------|
+| 400 | Validation Failed | Missing required field or validation failed | Verify all required fields are present |
+| 404 | Not Found | The sweepstakeId doesn't exist | Use a valid sweepstakeId |
+| 409 | Conflict | Duplicate email | The email already participated in this sweepstakes |
 
-**Ejemplo de error 400:**
+**Example 400 error:**
 ```json
 {
   "success": false,
@@ -375,14 +375,58 @@ curl -X POST http://localhost:3002/api-v1/n8n/participants \
 
 ---
 
-### 3. **Endpoints de Debug** (Solo para desarrollo)
+### 3. **GET Check Participant** - Check if participant exists
+
+**Endpoint:** `GET /api-v1/n8n/sweepstakes/:sweepstakeId/participants/check`
+
+**Purpose:** Check if an email or phone number is already registered in a sweepstakes.
+
+**Query Parameters:**
+- `email` - Email address to check
+- `phone` - Phone number (10 digits) to check
+
+**Note:** Provide either `email` OR `phone`, not both.
+
+**Usage example:**
+```bash
+# Check by email
+curl -H "Authorization: Bearer sk_test_mock123456789" \
+  "http://localhost:3002/api-v1/n8n/sweepstakes/summer_2025/participants/check?email=test@example.com"
+
+# Check by phone
+curl -H "Authorization: Bearer sk_test_mock123456789" \
+  "http://localhost:3002/api-v1/n8n/sweepstakes/summer_2025/participants/check?phone=5551234567"
+```
+
+**Successful response (participant exists):**
+```json
+{
+  "success": true,
+  "exists": true,
+  "participantId": "part_1760407343582_7bpj87",
+  "entryNumber": "SUMMER_2025-000042",
+  "createdAt": "2025-10-14T02:02:23.582Z"
+}
+```
+
+**Successful response (participant doesn't exist):**
+```json
+{
+  "success": true,
+  "exists": false
+}
+```
+
+---
+
+### 4. **Debug Endpoints** (Development only)
 
 #### GET Health Check
 ```bash
 curl http://localhost:3002/health
 ```
 
-Respuesta:
+Response:
 ```json
 {
   "success": true,
@@ -405,45 +449,53 @@ curl -H "Authorization: Bearer sk_test_mock123456789" \
 
 ---
 
-## 🎮 Cómo Funciona el Nodo
+## 🎮 How the Node Works
 
-### Configuración del Nodo en N8N
+### Node Configuration in N8N
 
-Cuando agregas el nodo "Sweeppea" en N8N, verás estas opciones:
+When you add the "Sweeppea" node in N8N, you'll see these options:
 
-1. **Credentials** (Requerido)
-   - Aquí seleccionas las credenciales configuradas previamente
+1. **Credentials** (Required)
+   - Select the previously configured credentials
 
-2. **Sweepstake ID** (Requerido)
-   - El ID del sorteo (ej: `summer_2025`, `holiday_special`)
+2. **Resource** (Required)
+   - Participant
 
-3. **Use Input Data** (Opcional, default: true)
-   - Si está en `true`: El nodo toma TODOS los datos del nodo anterior
-   - Si está en `false`: Tendrías que mapear campos manualmente (no implementado aún)
+3. **Operation** (Required)
+   - **Get Schema**: Get the required fields for a sweepstakes
+   - **Check Participant**: Check if email/phone is already registered
+   - **Create**: Create a new participant
 
-### ¿Qué hace el nodo internamente?
+4. **Sweepstake ID** (Required)
+   - The sweepstakes ID (e.g.: `summer_2025`, `holiday_special`)
+
+5. **Use Input Data** (Optional, default: true for Create operation)
+   - If `true`: Node takes ALL data from previous node
+   - If `false`: You would need to map fields manually (not implemented yet)
+
+### What does the node do internally?
 
 ```javascript
-// PASO 1: Obtener credenciales y configuración
-const sweepstakeId = "summer_2025";  // Lo que configuraste
-const credentials = {...};            // API key y ambiente
+// STEP 1: Get credentials and configuration
+const sweepstakeId = "summer_2025";  // What you configured
+const credentials = {...};            // API key and environment
 
-// PASO 2: Construir URL base según ambiente
-if (ambiente === 'production') {
+// STEP 2: Build base URL based on environment
+if (environment === 'production') {
   baseUrl = 'https://api.sweeppea.com';
-} else if (ambiente === 'staging') {
+} else if (environment === 'staging') {
   baseUrl = 'https://staging-api.sweeppea.com';
 } else {
   baseUrl = 'http://localhost:3002';  // Development
 }
 
-// PASO 3: Pedir schema
+// STEP 3: Request schema
 const schema = await fetch(
   `${baseUrl}/api-v1/n8n/sweepstakes/${sweepstakeId}/schema`
 );
 
-// PASO 4: Mapear datos del input
-const inputData = {...};  // Datos del nodo anterior
+// STEP 4: Map data from input
+const inputData = {...};  // Data from previous node
 const participantData = {};
 
 for (const field of schema.fields) {
@@ -452,14 +504,14 @@ for (const field of schema.fields) {
   }
 }
 
-// PASO 5: Validar campos requeridos
+// STEP 5: Validate required fields
 for (const field of schema.fields) {
   if (field.required && !participantData[field.name]) {
-    throw new Error(`Campo ${field.name} es requerido`);
+    throw new Error(`Field ${field.name} is required`);
   }
 }
 
-// PASO 6: Crear participante
+// STEP 6: Create participant
 const result = await fetch(
   `${baseUrl}/api-v1/n8n/participants`,
   {
@@ -471,29 +523,29 @@ const result = await fetch(
   }
 );
 
-// PASO 7: Retornar resultado al workflow
+// STEP 7: Return result to workflow
 return result;
 ```
 
 ---
 
-## 🧪 Guía de Pruebas
+## 🧪 Testing Guide
 
-### Pre-requisitos
+### Prerequisites
 
-1. **Node.js instalado** (v16 o superior)
-2. **Git instalado**
-3. **N8N instalado** (localmente o en cloud)
+1. **Node.js installed** (v16 or higher)
+2. **Git installed**
+3. **N8N installed** (locally or in cloud)
 
-### Paso 1: Iniciar el Mock Server
+### Step 1: Start the Mock Server
 
 ```bash
-# En terminal 1
+# In terminal 1
 cd mock-server
 node server.js
 ```
 
-**Deberías ver:**
+**You should see:**
 ```
 🚀 Sweeppea Mock API Server
 📡 Running on: http://localhost:3002
@@ -502,6 +554,7 @@ node server.js
 📚 Available endpoints:
    GET  /health
    GET  /api-v1/n8n/sweepstakes/:sweepstakeId/schema
+   GET  /api-v1/n8n/sweepstakes/:sweepstakeId/participants/check
    POST /api-v1/n8n/participants
    GET  /api-v1/debug/participants
    GET  /api-v1/debug/sweepstakes
@@ -509,27 +562,41 @@ node server.js
 ✨ Ready to accept requests!
 ```
 
-### Paso 2: Probar Endpoints Directamente
+### Step 2: Test Endpoints Directly
 
 **Test 1: Health Check**
 ```bash
 curl http://localhost:3002/health
 ```
 
-Debe retornar:
+Should return:
 ```json
 {"success":true,"status":"healthy",...}
 ```
 
-**Test 2: Obtener Schema**
+**Test 2: Get Schema**
 ```bash
 curl -H "Authorization: Bearer sk_test_mock123456789" \
   http://localhost:3002/api-v1/n8n/sweepstakes/summer_2025/schema
 ```
 
-Debe retornar el schema con los campos.
+Should return the schema with fields.
 
-**Test 3: Crear Participante**
+**Test 3: Check Participant**
+```bash
+curl -H "Authorization: Bearer sk_test_mock123456789" \
+  "http://localhost:3002/api-v1/n8n/sweepstakes/summer_2025/participants/check?email=test@example.com"
+```
+
+Should return:
+```json
+{
+  "success": true,
+  "exists": false
+}
+```
+
+**Test 4: Create Participant**
 ```bash
 curl -X POST http://localhost:3002/api-v1/n8n/participants \
   -H "Authorization: Bearer sk_test_mock123456789" \
@@ -546,7 +613,7 @@ curl -X POST http://localhost:3002/api-v1/n8n/participants \
   }'
 ```
 
-Debe retornar:
+Should return:
 ```json
 {
   "success": true,
@@ -556,17 +623,17 @@ Debe retornar:
 }
 ```
 
-**Test 4: Verificar Participante Creado**
+**Test 5: Verify Created Participant**
 ```bash
 curl -H "Authorization: Bearer sk_test_mock123456789" \
   http://localhost:3002/api-v1/debug/participants
 ```
 
-Deberías ver el participante que acabas de crear.
+You should see the participant you just created.
 
-**Test 5: Probar Email Duplicado**
+**Test 6: Test Duplicate Email**
 
-Ejecuta el Test 3 nuevamente (mismo email). Debe retornar error 409:
+Execute Test 4 again (same email). Should return error 409:
 ```json
 {
   "success": false,
@@ -575,45 +642,45 @@ Ejecuta el Test 3 nuevamente (mismo email). Debe retornar error 409:
 }
 ```
 
-### Paso 3: Configurar N8N
+### Step 3: Configure N8N
 
-#### 3.1 Enlazar el nodo con N8N
+#### 3.1 Link the node with N8N
 
 ```bash
-# En la raíz del proyecto
+# In project root
 npm link
 
-# En tu instalación de N8N
+# In your N8N installation
 cd ~/.n8n/custom
 npm link n8n-nodes-sweeppea
 ```
 
-#### 3.2 Reiniciar N8N
+#### 3.2 Restart N8N
 
 ```bash
-# Si tienes N8N corriendo localmente
+# If you have N8N running locally
 n8n start
 ```
 
-#### 3.3 Crear Credenciales en N8N
+#### 3.3 Create Credentials in N8N
 
-1. Ve a **Settings** → **Credentials**
-2. Click en **Add Credential**
-3. Busca "Sweeppea API"
-4. Configura:
+1. Go to **Settings** → **Credentials**
+2. Click **Add Credential**
+3. Search for "Sweeppea API"
+4. Configure:
    - **Environment:** Development
    - **API Key:** `sk_test_mock123456789`
    - **Custom API URL:** `http://localhost:3002`
-5. Click en **Test** → Debe decir "Connection successful"
-6. Guarda
+5. Click **Test** → Should say "Connection successful"
+6. Save
 
-### Paso 4: Crear Workflow de Prueba
+### Step 4: Create Test Workflow
 
-#### 4.1 Workflow Simple
+#### 4.1 Simple Workflow
 
-1. Crea un nuevo workflow
-2. Agrega nodo **"Manual"** (trigger manual)
-3. Agrega nodo **"Set"** para simular datos:
+1. Create a new workflow
+2. Add **"Manual"** node (manual trigger)
+3. Add **"Set"** node to simulate data:
    ```json
    {
      "email": "workflow@example.com",
@@ -624,13 +691,15 @@ n8n start
      "newsletter": true
    }
    ```
-4. Agrega nodo **"Sweeppea"**:
-   - Credentials: Selecciona las que creaste
+4. Add **"Sweeppea"** node:
+   - Credentials: Select the ones you created
+   - Resource: Participant
+   - Operation: Create
    - Sweepstake ID: `summer_2025`
-5. Conecta: Manual → Set → Sweeppea
-6. Click en **Execute Workflow**
+5. Connect: Manual → Set → Sweeppea
+6. Click **Execute Workflow**
 
-**Resultado esperado:**
+**Expected result:**
 ```json
 {
   "success": true,
@@ -644,265 +713,166 @@ n8n start
 }
 ```
 
-#### 4.2 Workflow con Formulario Web
+#### 4.2 Workflow with WhatsApp
 
-1. Agrega nodo **"Webhook"** como trigger
-2. Agrega nodo **"Sweeppea"**
-3. Conecta: Webhook → Sweeppea
-4. Activa el workflow
-5. Copia la URL del webhook
-6. Envía datos vía POST:
-
-```bash
-curl -X POST https://tu-n8n.com/webhook/abc123 \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "webhook@example.com",
-    "firstName": "Webhook",
-    "lastName": "Test",
-    "age": 28,
-    "country": "Mexico"
-  }'
-```
-
-### Paso 5: Probar Diferentes Sorteos
-
-El mock server tiene 2 sorteos configurados:
-
-**summer_2025:**
-- Campos: email, firstName, lastName, phone, age, country, newsletter
-
-**holiday_special:**
-- Campos: email, fullName, favoriteHoliday
-
-Prueba crear participantes para ambos:
-
-```bash
-# Holiday Special
-curl -X POST http://localhost:3002/api-v1/n8n/participants \
-  -H "Authorization: Bearer sk_test_mock123456789" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "sweepstakeId": "holiday_special",
-    "data": {
-      "email": "holiday@example.com",
-      "fullName": "Holiday User",
-      "favoriteHoliday": "Christmas"
-    }
-  }'
-```
-
-### Paso 6: Probar Validaciones
-
-**Test: Campo Requerido Faltante**
-```bash
-curl -X POST http://localhost:3002/api-v1/n8n/participants \
-  -H "Authorization: Bearer sk_test_mock123456789" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "sweepstakeId": "summer_2025",
-    "data": {
-      "email": "incomplete@example.com"
-    }
-  }'
-```
-
-Debe retornar error 400 indicando qué campos faltan.
-
-**Test: Email Inválido**
-```bash
-curl -X POST http://localhost:3002/api-v1/n8n/participants \
-  -H "Authorization: Bearer sk_test_mock123456789" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "sweepstakeId": "summer_2025",
-    "data": {
-      "email": "not-an-email",
-      "firstName": "Test",
-      "lastName": "User",
-      "age": 25,
-      "country": "Canada"
-    }
-  }'
-```
-
-Debe retornar error 400 indicando que el email es inválido.
-
-**Test: Edad Fuera de Rango**
-```bash
-curl -X POST http://localhost:3002/api-v1/n8n/participants \
-  -H "Authorization: Bearer sk_test_mock123456789" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "sweepstakeId": "summer_2025",
-    "data": {
-      "email": "young@example.com",
-      "firstName": "Too",
-      "lastName": "Young",
-      "age": 15,
-      "country": "USA"
-    }
-  }'
-```
-
-Debe retornar error 400 indicando que la edad debe ser al menos 18.
+**WhatsApp flow:** User sends message → AI Agent collects 5 fields conversationally → Switch detects JSON with create_participant action → Code parses JSON → Sweeppea node creates participant → Success message sent back via WhatsApp
 
 ---
 
-## ❓ Preguntas Frecuentes
+## ❓ Frequently Asked Questions
 
-### ¿Cuál es la diferencia entre el mock server y la API real?
+### What's the difference between the mock server and the real API?
 
 **Mock Server:**
-- Servidor de prueba que corre localmente
-- Solo para desarrollo
-- Datos se guardan en memoria (se pierden al reiniciar)
+- Test server running locally
+- Only for development
+- Data stored in memory (lost on restart)
 - URL: `http://localhost:3002`
 
-**API Real:**
-- Servidor de producción de Sweeppea
-- Datos reales que se guardan en base de datos
+**Real API:**
+- Sweeppea production server
+- Real data saved to database
 - URL: `https://api.sweeppea.com`
 
-### ¿Qué es un sweepstakeId?
+### What is a sweepstakeId?
 
-Es un identificador único de cada sorteo en Sweeppea. Por ejemplo:
+It's a unique identifier for each sweepstakes in Sweeppea. For example:
 - `summer_2025` → Summer Giveaway 2025
 - `holiday_special` → Holiday Special Giveaway
 - `black_friday_2025` → Black Friday Giveaway
 
-Cada sorteo puede tener campos diferentes.
+Each sweepstakes can have different fields.
 
-### ¿Por qué necesito llamar primero al endpoint de schema?
+### Why do I need to call the schema endpoint first?
 
-Porque **cada sorteo puede tener campos diferentes**. El schema te dice:
-- Qué campos necesitas enviar
-- Cuáles son obligatorios
-- Qué tipo de dato espera (string, number, boolean, etc.)
-- Qué validaciones aplican
+Because **each sweepstakes can have different fields**. The schema tells you:
+- What fields you need to send
+- Which ones are required
+- What data type is expected (string, number, boolean, etc.)
+- What validations apply
 
-**Sin schema:** No sabrías qué enviar
-**Con schema:** Sabes exactamente qué necesitas
+**Without schema:** You wouldn't know what to send
+**With schema:** You know exactly what you need
 
-### ¿Qué pasa si envío un campo que no está en el schema?
+### What happens if I send a field not in the schema?
 
-El campo extra se ignora. Solo se procesan los campos definidos en el schema.
+The extra field is ignored. Only fields defined in the schema are processed.
 
-### ¿Qué pasa si NO envío un campo requerido?
+### What happens if I DON'T send a required field?
 
-Recibes un error 400 con el mensaje indicando qué campos faltan.
+You receive a 400 error with a message indicating which fields are missing.
 
-### ¿Puedo crear el mismo participante dos veces?
+### Can I create the same participant twice?
 
-No. Si intentas crear un participante con un email que ya existe en ese sorteo, recibes error 409 (Conflict).
+No. If you try to create a participant with an email that already exists in that sweepstakes, you receive error 409 (Conflict).
 
-### ¿Cómo sé si mi participante se creó exitosamente?
+### How do I know if my participant was created successfully?
 
-La respuesta tiene `"success": true` y te da:
-- `participantId`: ID único del participante
-- `entryNumber`: Número de entrada (ej: "SUMMER_2025-000001")
-- `createdAt`: Fecha/hora de creación
+The response has `"success": true` and gives you:
+- `participantId`: Unique participant ID
+- `entryNumber`: Entry number (e.g.: "SUMMER_2025-000001")
+- `createdAt`: Creation date/time
 
-### ¿Qué ambientes hay disponibles?
+### What environments are available?
 
 1. **Development:** `http://localhost:3002` (mock server)
-2. **Staging:** `https://staging-api.sweeppea.com` (cuando esté disponible)
-3. **Production:** `https://api.sweeppea.com` (cuando esté disponible)
+2. **Staging:** `https://staging-api.sweeppea.com` (when available)
+3. **Production:** `https://api.sweeppea.com` (when available)
 
-### ¿Cómo cambio de ambiente?
+### How do I switch environments?
 
-En las credenciales de N8N:
-1. Ve a Settings → Credentials
-2. Edita las credenciales de Sweeppea
-3. Cambia el campo "Environment"
+In N8N credentials:
+1. Go to Settings → Credentials
+2. Edit Sweeppea credentials
+3. Change the "Environment" field
 
-### ¿El nodo funciona con múltiples items?
+### Does the node work with multiple items?
 
-Sí! Si el nodo anterior retorna 10 items, el nodo de Sweeppea procesa los 10 automáticamente, creando 10 participantes.
+Yes! If the previous node returns 10 items, the Sweeppea node processes all 10 automatically, creating 10 participants.
 
-### ¿Qué pasa si uno de los 10 items falla?
+### What happens if one of the 10 items fails?
 
-Depende de la configuración "Continue on Fail":
-- **Si está activado:** Procesa los demás items y marca el fallido con error
-- **Si está desactivado:** Se detiene en el primer error
+Depends on "Continue on Fail" configuration:
+- **If enabled:** Processes other items and marks the failed one with error
+- **If disabled:** Stops at the first error
 
-### ¿Cómo puedo ver todos los participantes creados?
+### How can I see all created participants?
 
 ```bash
 curl -H "Authorization: Bearer sk_test_mock123456789" \
   http://localhost:3002/api-v1/debug/participants
 ```
 
-### ¿Cómo reseteo el mock server?
+### How do I reset the mock server?
 
-Simplemente reinícialo:
+Simply restart it:
 ```bash
-# Ctrl+C para detener
-# Luego:
+# Ctrl+C to stop
+# Then:
 node server.js
 ```
 
-Todos los participantes creados se pierden (es solo para pruebas).
+All created participants are lost (it's only for testing).
 
 ---
 
-## 🎓 Explicación para tus Compañeros
+## 🎓 Explanation for Your Team
 
-Aquí hay un script que puedes usar para explicar la integración:
-
----
-
-**"Chicos, les explico cómo funciona esto:"**
-
-**1. El Problema:**
-Antes, si alguien llenaba un formulario para participar en un sorteo, teníamos que crear el participante manualmente. Imagínate hacerlo 1000 veces al día.
-
-**2. La Solución:**
-Ahora tenemos un nodo personalizado en N8N que hace todo automáticamente.
-
-**3. ¿Cómo Funciona?**
-
-Imaginen que tienen un sorteo llamado "Summer 2025" donde pedimos: email, nombre, apellido y edad.
-
-**Paso A:** Un usuario llena el formulario
-**Paso B:** Los datos llegan a N8N
-**Paso C:** Nuestro nodo le pregunta a Sweeppea: "Oye, ¿qué campos necesitas para Summer 2025?"
-**Paso D:** Sweeppea responde: "Necesito email, nombre, apellido y edad"
-**Paso E:** Nuestro nodo toma los datos del formulario y los envía a Sweeppea
-**Paso F:** Sweeppea crea el participante y nos da un número de entrada
-
-**4. ¿Por qué es dinámico?**
-
-Porque si mañana creamos un nuevo sorteo "Black Friday" que solo pida email y nombre, el mismo nodo funciona. Él pregunta qué campos necesita y se adapta.
-
-**5. ¿Qué hicimos nosotros?**
-
-Creamos:
-- Un nodo para N8N
-- Un sistema de credenciales para conectarse
-- Un servidor de pruebas (mock) para hacer tests sin tocar producción
-
-**6. ¿Qué pueden probar?**
-
-Les voy a mostrar en vivo cómo:
-- Iniciar el servidor de pruebas
-- Crear un workflow en N8N
-- Simular que alguien llena un formulario
-- Ver cómo se crea el participante automáticamente
+Here's a script you can use to explain the integration:
 
 ---
 
-## 📝 Notas Finales
+**"Guys, let me explain how this works:"**
 
-- El mock server tiene 2 sorteos de ejemplo: `summer_2025` y `holiday_special`
-- La API key de prueba es: `sk_test_mock123456789`
-- Los datos se guardan en memoria, se pierden al reiniciar el server
-- Para producción, solo cambias el ambiente en las credenciales
+**1. The Problem:**
+Before, if someone filled a form to participate in a sweepstakes, we had to create the participant manually. Imagine doing it 1000 times a day.
 
-**¿Tienes dudas?** Revisa esta guía o contacta al equipo de desarrollo.
+**2. The Solution:**
+Now we have a custom node in N8N that does everything automatically.
+
+**3. How Does It Work?**
+
+Imagine you have a sweepstakes called "Summer 2025" where we ask for: email, first name, last name and age.
+
+**Step A:** A user fills the form
+**Step B:** The data arrives at N8N
+**Step C:** Our node asks Sweeppea: "Hey, what fields do you need for Summer 2025?"
+**Step D:** Sweeppea responds: "I need email, first name, last name and age"
+**Step E:** Our node takes the form data and sends it to Sweeppea
+**Step F:** Sweeppea creates the participant and gives us an entry number
+
+**4. Why is it dynamic?**
+
+Because if tomorrow we create a new sweepstakes "Black Friday" that only asks for email and name, the same node works. It asks what fields it needs and adapts.
+
+**5. What did we do?**
+
+We created:
+- A node for N8N
+- A credentials system to connect
+- A test server (mock) to test without touching production
+
+**6. What can you test?**
+
+I'll show you live how to:
+- Start the test server
+- Create a workflow in N8N
+- Simulate someone filling a form
+- See how the participant is created automatically
 
 ---
 
-**Última actualización:** 2025-10-14
-**Versión:** 1.0
-**Autor:** Sweeppea Development Lab
+## 📝 Final Notes
+
+- The mock server has 2 example sweepstakes: `summer_2025` and `holiday_special`
+- The test API key is: `sk_test_mock123456789`
+- Data is stored in memory, lost on server restart
+- For production, just change the environment in credentials
+
+**Have questions?** Review this guide or contact the development team.
+
+---
+
+**Last updated:** 2025-10-14
+**Version:** 1.0
+**Author:** Sweeppea Development Lab
