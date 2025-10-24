@@ -107,12 +107,29 @@ export class Sweeppea implements INodeType {
 				displayOptions : {
 					show: {
 						resource  : ['participant'],
-						operation : ['getSchema', 'checkParticipant', 'create'],
+						operation : ['getSchema', 'checkParticipant'],
 					},
 				},
 				default     : '',
 				placeholder : 'summer_2025',
 				description : 'The unique identifier of the sweepstake',
+			},
+			{
+				displayName    : 'Sweepstakes Token',
+				name           : 'sweepstakesToken',
+				type           : 'string',
+				typeOptions    : {
+					password: true,
+				},
+				displayOptions : {
+					show: {
+						resource  : ['participant'],
+						operation : ['create'],
+					},
+				},
+				default     : '',
+				placeholder : '83d12d10-7a6d-4f99-a546-5a1c3cc267f9',
+				description : 'The sweepstakes UUID token (REQUIRED for Production environment, leave empty for Development)',
 			},
 		{
 			displayName    : 'Email or Phone',
@@ -168,16 +185,13 @@ export class Sweeppea implements INodeType {
 		/* Get Credentials */
 		const credentials = await this.getCredentials('sweeppeaApi');
 		const environment = credentials.environment as string;
+		const isProduction = environment === 'production';
 
 		let baseUrl: string;
 
-		if (environment === 'production') {
+		if (isProduction) {
 
-			baseUrl = 'https://api.sweeppea.com';
-
-		} else if (environment === 'staging') {
-
-			baseUrl = 'https://staging-api.sweeppea.com';
+			baseUrl = 'https://d2e1p15gger19t.cloudfront.net/prod/api-v2';
 
 		} else {
 
@@ -353,102 +367,82 @@ export class Sweeppea implements INodeType {
 
 					try {
 
-						const sweepstakeId     = this.getNodeParameter('sweepstakeId', i) as string;
-						const additionalFields = this.getNodeParameter('additionalFields', i) as {
-							useInputData?: boolean;
-						};
+						const inputData    = items[i].json;
 
-						const useInputData = additionalFields.useInputData !== false;
+						let createResponse: any;
 
-						/* Step 1: Fetch Sweepstake Schema */
-						const schemaUrl      = `${baseUrl}/api-v1/n8n/sweepstakes/${sweepstakeId}/schema`;
-						const schemaResponse = await this.helpers.httpRequestWithAuthentication.call(
-							this,
-							'sweeppeaApi',
-							{
-								method : 'GET',
-								url    : schemaUrl,
-								json   : true,
-							},
-						);
+						if (isProduction) {
 
-						if (!schemaResponse.success) {
+							/* Production Environment - Use Real Sweeppea API Format */
+							const sweepstakesToken = this.getNodeParameter('sweepstakesToken', i) as string;
+							const apiToken         = credentials.apiToken as string;
 
-							throw new NodeOperationError(
-								this.getNode(),
-								`Failed to fetch sweepstake schema: ${schemaResponse.message || 'Unknown error'}`,
-								{ itemIndex: i },
-							);
-						}
-
-						const schema = schemaResponse as {
-							success      : boolean;
-							sweepstakeId : string;
-							name         : string;
-							status       : string;
-							fields       : Array<{
-								name         : string;
-								displayName  : string;
-								type         : string;
-								required     : boolean;
-								validation?  : Record<string, unknown>;
-								options?     : string[];
-							}>;
-						};
-
-						/* Step 2: Build Participant Data From Input */
-						const inputData                          = items[i].json;
-						const participantData: Record<string, unknown> = {};
-
-						if (useInputData) {
-
-							/* Use All Data From Input */
-							for (const field of schema.fields) {
-
-								const fieldName = field.name;
-
-								if (inputData[fieldName] !== undefined) {
-
-									participantData[fieldName] = inputData[fieldName];
-								}
-							}
-						}
-
-						/* Step 3: Validate Required Fields */
-						const missingFields: string[] = [];
-
-						for (const field of schema.fields) {
-
-							if (field.required && !participantData[field.name]) {
-
-								missingFields.push(field.displayName);
-							}
-						}
-
-						if (missingFields.length > 0) {
-
-							throw new NodeOperationError(
-								this.getNode(),
-								`Missing required fields for sweepstake '${schema.name}': ${missingFields.join(', ')}. Please ensure these fields are present in the input data.`,
-								{ itemIndex: i },
-							);
-						}
-
-						/* Step 4: Create Participant */
-						const createUrl      = `${baseUrl}/api-v1/n8n/participants`;
-						const createResponse = await this.helpers.httpRequestWithAuthentication.call(
-							this,
-							'sweeppeaApi',
-							{
-								method : 'POST',
-								url    : createUrl,
-								body   : {
-									sweepstakeId : sweepstakeId,
-									data         : participantData,
+							/* Build Request Body For Real API */
+							const requestBody = {
+								lang             : 'en',
+								source           : 'n8n-integration',
+								apiToken         : apiToken,
+								sweepstakesToken : sweepstakesToken,
+								entryPageFields  : {
+									KeyPhoneNumber : inputData.phone || inputData.Mobile_Number || '',
+									KeyEmail       : inputData.email || inputData.Email || '',
+									BonusEntries   : String(inputData.bonusEntries || 0),
+									Fields         : {
+										First_Name    : inputData.firstName || inputData.First_Name || '',
+										Last_Name     : inputData.lastName || inputData.Last_Name || '',
+										Email         : inputData.email || inputData.Email || '',
+										Mobile_Number : inputData.phone || inputData.Mobile_Number || '',
+									},
 								},
-								json: true,
+							};
+
+							/* Call Real Sweeppea API (No Auth Header Needed - Token In Body) */
+							createResponse = await this.helpers.request({
+								method  : 'POST',
+								url     : `${baseUrl}/injectParticipant`,
+								body    : requestBody,
+								json    : true,
+								headers : {
+									'Content-Type': 'application/json',
+								},
+							});
+
+				} else {
+
+					/* Development Environment - Use Same Format As Production */
+					const sweepstakesToken = this.getNodeParameter('sweepstakesToken', i) as string;
+					const apiToken         = credentials.apiKey as string;
+
+					/* Build Request Body (Same Format As Production API) */
+					const requestBody = {
+						lang             : 'en',
+						source           : 'n8n-integration',
+						apiToken         : apiToken,
+						sweepstakesToken : sweepstakesToken,
+						entryPageFields  : {
+							KeyPhoneNumber : inputData.phone || inputData.Mobile_Number || '',
+							KeyEmail       : inputData.email || inputData.Email || '',
+							BonusEntries   : String(inputData.bonusEntries || 0),
+							Fields         : {
+								First_Name    : inputData.firstName || inputData.First_Name || '',
+								Last_Name     : inputData.lastName || inputData.Last_Name || '',
+								Email         : inputData.email || inputData.Email || '',
+								Mobile_Number : inputData.phone || inputData.Mobile_Number || '',
 							},
-						);
+						},
+					};
+
+					/* Call Mock Sweeppea API (No Auth Header Needed - Token In Body) */
+					createResponse = await this.helpers.request({
+						method  : 'POST',
+						url     : `${baseUrl}/injectParticipant`,
+						body    : requestBody,
+						json    : true,
+						headers : {
+							'Content-Type': 'application/json',
+						},
+					});
+				}
 
 						/* Add Result To Return Data */
 						returnData.push({

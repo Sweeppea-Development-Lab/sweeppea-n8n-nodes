@@ -14,7 +14,6 @@
 
 import {
 	IAuthenticateGeneric,
-	ICredentialTestRequest,
 	ICredentialType,
 	INodeProperties,
 } from 'n8n-workflow';
@@ -40,16 +39,29 @@ export class SweeppeaApi implements ICredentialType {
 					value : 'production',
 				},
 				{
-					name  : 'Staging',
-					value : 'staging',
-				},
-				{
 					name  : 'Development',
 					value : 'development',
 				},
 			],
-			default     : 'production',
+			default     : 'development',
 			description : 'The environment to connect to',
+		},
+		{
+			displayName : 'API Token',
+			name        : 'apiToken',
+			type        : 'string',
+			typeOptions : {
+				password: true,
+			},
+			default       : '',
+			required      : true,
+			description   : 'Your Sweeppea API token (UUID format)',
+			placeholder   : 'dbb6fb5a-24e2-4dda-b1f5-02a28468dac8',
+			displayOptions: {
+				show: {
+					environment: ['production'],
+				},
+			},
 		},
 		{
 			displayName : 'API Key',
@@ -58,10 +70,15 @@ export class SweeppeaApi implements ICredentialType {
 			typeOptions : {
 				password: true,
 			},
-			default     : '',
-			required    : true,
-			description : 'Your Sweeppea API key (starts with sk_)',
-			placeholder : 'sk_live_...',
+			default       : 'sk_test_mock123456789',
+			required      : true,
+			description   : 'Your Sweeppea API key for development',
+			placeholder   : 'sk_test_mock123456789',
+			displayOptions: {
+				show: {
+					environment: ['development'],
+				},
+			},
 		},
 		{
 			displayName   : 'Custom API URL',
@@ -85,14 +102,6 @@ export class SweeppeaApi implements ICredentialType {
 			headers: {
 				Authorization: '=Bearer {{$credentials.apiKey}}',
 			},
-		},
-	};
-
-	test: ICredentialTestRequest = {
-		request: {
-			baseURL : '={{$credentials.environment === "production" ? "https://api.sweeppea.com" : $credentials.environment === "staging" ? "https://staging-api.sweeppea.com" : $credentials.customApiUrl}}',
-			url     : '/health',
-			method  : 'GET',
 		},
 	};
 }

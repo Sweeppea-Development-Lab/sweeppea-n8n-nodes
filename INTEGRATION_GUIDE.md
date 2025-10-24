@@ -261,6 +261,104 @@ Good luck! 🍀"
 
 ## 🔌 API Endpoints
 
+> **Note**: There are two API formats:
+> - **Development/Mock API**: Uses Bearer authentication and schema-based validation
+> - **Production API**: Uses token-in-body authentication with fixed format
+
+---
+
+### Production API (Real Sweeppea API)
+
+#### **POST /injectParticipant** - Create participant (Production)
+
+**Endpoint:** `POST https://d2e1p15gger19t.cloudfront.net/prod/api-v2/injectParticipant`
+
+**Purpose:** Create a new participant in a sweepstakes using the production Sweeppea API.
+
+**Authentication:** API token included in request body (no Bearer header needed)
+
+**Request Body:**
+```json
+{
+  "lang": "en",
+  "source": "n8n-integration",
+  "apiToken": "dbb6fb5a-24e2-4dda-b1f5-02a28468dac8",
+  "sweepstakesToken": "965a7edb-1f46-4116-a394-9c8a63769284",
+  "entryPageFields": {
+    "KeyPhoneNumber": "1234567890",
+    "KeyEmail": "participant@example.com",
+    "BonusEntries": "5",
+    "Fields": {
+      "First_Name": "John",
+      "Last_Name": "Doe",
+      "Email": "john.doe@example.com",
+      "Mobile_Number": "1234567890"
+    }
+  }
+}
+```
+
+**Field Descriptions:**
+- `lang`: Language code (always "en")
+- `source`: Source identifier (e.g., "n8n-integration")
+- `apiToken`: Your Sweeppea API token (UUID format)
+- `sweepstakesToken`: The specific sweepstakes UUID
+- `entryPageFields`: Participant data
+  - `KeyPhoneNumber`: Phone number (10 digits, required)
+  - `KeyEmail`: Email address (required)
+  - `BonusEntries`: Bonus entries as string (e.g., "0", "5")
+  - `Fields`: Additional participant fields
+    - `First_Name`: Participant's first name
+    - `Last_Name`: Participant's last name
+    - `Email`: Participant's email (same as KeyEmail)
+    - `Mobile_Number`: Phone number (same as KeyPhoneNumber)
+
+**Success Response (201):**
+```json
+{
+  "Response": true,
+  "Message": "Participant created successfully",
+  "ParticipantId": "part_1761261784239_keyks",
+  "EntryNumber": "ENTRY-000001",
+  "CreatedAt": "2025-10-23T23:23:04.239Z"
+}
+```
+
+**Error Responses:**
+| Code | Response | Reason |
+|------|----------|--------|
+| 401 | `{"Response": false, "Message": "Invalid API token"}` | Invalid or missing apiToken |
+| 400 | `{"Response": false, "Message": "Invalid or missing sweepstakes token"}` | Invalid sweepstakesToken |
+| 400 | `{"Response": false, "Message": "KeyEmail is required"}` | Missing email |
+| 409 | `{"Response": false, "Message": "Participant already exists"}` | Duplicate email |
+
+**cURL Example:**
+```bash
+curl -X POST https://d2e1p15gger19t.cloudfront.net/prod/api-v2/injectParticipant \
+  -H "Content-Type: application/json" \
+  -d '{
+    "lang": "en",
+    "source": "curl",
+    "apiToken": "dbb6fb5a-24e2-4dda-b1f5-02a28468dac8",
+    "sweepstakesToken": "965a7edb-1f46-4116-a394-9c8a63769284",
+    "entryPageFields": {
+      "KeyPhoneNumber": "1234567890",
+      "KeyEmail": "participant@example.com",
+      "BonusEntries": "5",
+      "Fields": {
+        "First_Name": "John",
+        "Last_Name": "Doe",
+        "Email": "john.doe@example.com",
+        "Mobile_Number": "1234567890"
+      }
+    }
+  }'
+```
+
+---
+
+### Development/Mock API
+
 ### 1. **GET Schema** - Get sweepstakes fields
 
 **Endpoint:** `GET /api-v1/n8n/sweepstakes/:sweepstakeId/schema`

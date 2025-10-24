@@ -21,8 +21,14 @@ const PORT    = 3002;
 app.use(cors());
 app.use(express.json());
 
-/* Test API Key */
-const VALID_API_KEY = 'sk_test_mock123456789';
+/* Test API Key And Token */
+const VALID_API_TOKEN = 'sk_test_mock123456789';
+
+/* Valid Sweepstakes Tokens */
+const VALID_SWEEPSTAKES_TOKENS = {
+	'83d12d10-7a6d-4f99-a546-5a1c3cc267f9' : 'Summer Mega Giveaway 2025',
+	'test-token-123'                       : 'Holiday Special Giveaway',
+};
 
 /* In-Memory Database */
 const sweepstakes = {
@@ -124,7 +130,7 @@ const sweepstakes = {
 const participants = [];
 
 /*
- * Middleware Used To Authenticate API Key
+ * Middleware Used To Authenticate API Key (For Legacy Endpoints)
  */
 const authenticateApiKey = (_req, _res, next) => {
 
@@ -142,7 +148,7 @@ const authenticateApiKey = (_req, _res, next) => {
 
 	const apiKey = authHeader.substring(7);
 
-	if (apiKey !== VALID_API_KEY) {
+	if (apiKey !== VALID_API_TOKEN) {
 
 		/* Return FALSE */
 		return _res.status(401).json({
@@ -547,6 +553,98 @@ app.get('/api-v1/debug/sweepstakes', authenticateApiKey, (_req, _res) => {
 });
 
 /*
+ * Endpoint Used To Inject Participant (Production API Format)
+ */
+app.post('/injectParticipant', (_req, _res) => {
+
+	const { lang, source, apiToken, sweepstakesToken, entryPageFields } = _req.body;
+
+	/* Validate API Token */
+	if (!apiToken || apiToken !== VALID_API_TOKEN) {
+
+		/* Return FALSE */
+		return _res.status(401).json({
+			Response : false,
+			Message  : 'Invalid API token'
+		});
+	}
+
+	/* Validate Sweepstakes Token */
+	if (!sweepstakesToken || !VALID_SWEEPSTAKES_TOKENS[sweepstakesToken]) {
+
+		/* Return FALSE */
+		return _res.status(400).json({
+			Response : false,
+			Message  : 'Invalid or missing sweepstakes token'
+		});
+	}
+
+	/* Validate Entry Page Fields */
+	if (!entryPageFields) {
+
+		/* Return FALSE */
+		return _res.status(400).json({
+			Response : false,
+			Message  : 'Missing entryPageFields'
+		});
+	}
+
+	const { KeyPhoneNumber, KeyEmail, BonusEntries, Fields } = entryPageFields;
+
+	/* Validate Required Fields */
+	if (!KeyEmail) {
+
+		/* Return FALSE */
+		return _res.status(400).json({
+			Response : false,
+			Message  : 'KeyEmail is required in entryPageFields'
+		});
+	}
+
+	/* Check For Duplicate Email */
+	const duplicate = participants.find(_p => _p.email === KeyEmail);
+
+	if (duplicate) {
+
+		/* Return FALSE */
+		return _res.status(409).json({
+			Response : false,
+			Message  : `Participant with email '${KeyEmail}' already exists`
+		});
+	}
+
+	/* Create Participant */
+	const participantId = `part_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+	const entryNumber   = participants.length + 1;
+	const createdAt     = new Date().toISOString();
+
+	const participant = {
+		participantId     : participantId,
+		sweepstakesToken  : sweepstakesToken,
+		sweepstakesName   : VALID_SWEEPSTAKES_TOKENS[sweepstakesToken],
+		entryNumber       : `ENTRY-${entryNumber.toString().padStart(6, '0')}`,
+		email             : KeyEmail,
+		phone             : KeyPhoneNumber || null,
+		bonusEntries      : BonusEntries || 0,
+		fields            : Fields || {},
+		source            : source || 'unknown',
+		lang              : lang || 'en',
+		createdAt         : createdAt
+	};
+
+	participants.push(participant);
+
+	/* Return TRUE */
+	_res.status(201).json({
+		Response      : true,
+		Message       : 'Participant created successfully',
+		ParticipantId : participantId,
+		EntryNumber   : participant.entryNumber,
+		CreatedAt     : createdAt
+	});
+});
+
+/*
  * Error Handling Middleware
  */
 app.use((_err, _req, _res, _next) => {
@@ -581,8 +679,11 @@ app.listen(PORT, () => {
 
 	console.log(`\n🚀 Sweeppea Mock API Server`);
 	console.log(`📡 Running on: http://localhost:${PORT}`);
-	console.log(`🔑 Test API Key: ${VALID_API_KEY}`);
-	console.log(`\n📚 Available endpoints:`);
+	console.log(`🔑 Test API Token: ${VALID_API_TOKEN}`);
+	console.log(`🎫 Test Sweepstakes Token: 83d12d10-7a6d-4f99-a546-5a1c3cc267f9`);
+	console.log(`\n📚 Production API Format:`);
+	console.log(`   POST /injectParticipant (no auth header, token in body)`);
+	console.log(`\n📚 Legacy Endpoints (Bearer auth):`);
 	console.log(`   GET  /health`);
 	console.log(`   GET  /api-v1/n8n/sweepstakes/:sweepstakeId/schema`);
 	console.log(`   POST /api-v1/n8n/participants`);
