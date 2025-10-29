@@ -290,6 +290,7 @@ export class Sweeppea implements INodeType {
 					/* Determine If Input Is Email Or Phone */
 					const isEmail = emailOrPhone.includes('@');
 
+					/* Validate Phone Format If Not Email */
 					if (!isEmail && emailOrPhone.length !== 10) {
 
 						throw new NodeOperationError(
@@ -472,7 +473,7 @@ export class Sweeppea implements INodeType {
 
 							throw new NodeOperationError(
 								this.getNode(),
-								`Sweepstake not found. Please verify the Sweepstakes Token is correct.`,
+								`Sweepstake not found. Please verify the Sweepstake ID is correct.`,
 								{ itemIndex: i },
 							);
 

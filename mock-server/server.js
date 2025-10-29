@@ -553,6 +553,174 @@ app.get('/api-v1/debug/sweepstakes', authenticateApiKey, (_req, _res) => {
 });
 
 /*
+ * Endpoint Used To Get Sweepstake Schema (Production API Format)
+ */
+app.post('/getSchema', (_req, _res) => {
+
+	const { lang, source, apiToken, sweepstakesToken } = _req.body;
+
+	/* Validate API Token */
+	if (!apiToken || apiToken !== VALID_API_TOKEN) {
+
+		/* Return FALSE */
+		return _res.status(401).json({
+			Response : false,
+			Message  : 'Invalid API token'
+		});
+	}
+
+	/* Validate Sweepstakes Token */
+	if (!sweepstakesToken || !VALID_SWEEPSTAKES_TOKENS[sweepstakesToken]) {
+
+		/* Return FALSE */
+		return _res.status(404).json({
+			Response : false,
+			Message  : 'Sweepstake not found. Invalid sweepstakes token.'
+		});
+	}
+
+	/* Get Sweepstake Name */
+	const sweepstakeName = VALID_SWEEPSTAKES_TOKENS[sweepstakesToken];
+
+	/* Mock Schema Based On First Sweepstake Definition */
+	const schema = {
+		SweepstakeName   : sweepstakeName,
+		SweepstakesToken : sweepstakesToken,
+		Fields           : [
+			{
+				Name        : 'First_Name',
+				DisplayName : 'First Name',
+				Type        : 'string',
+				Required    : true,
+				Validation  : { MinLength: 2, MaxLength: 50 },
+				Placeholder : 'John'
+			},
+			{
+				Name        : 'Last_Name',
+				DisplayName : 'Last Name',
+				Type        : 'string',
+				Required    : true,
+				Validation  : { MinLength: 2, MaxLength: 50 },
+				Placeholder : 'Doe'
+			},
+			{
+				Name        : 'Email',
+				DisplayName : 'Email Address',
+				Type        : 'string',
+				Required    : true,
+				Validation  : { Format: 'email' },
+				Placeholder : 'john@example.com'
+			},
+			{
+				Name        : 'Mobile_Number',
+				DisplayName : 'Phone Number',
+				Type        : 'string',
+				Required    : false,
+				Validation  : { Format: 'phone' },
+				Placeholder : '+1234567890'
+			}
+		]
+	};
+
+	/* Return TRUE */
+	_res.status(200).json({
+		Response : true,
+		Message  : 'Schema retrieved successfully',
+		Schema   : schema,
+		Lang     : lang || 'en',
+		Source   : source || 'n8n-integration'
+	});
+});
+
+/*
+ * Endpoint Used To Check If Participant Exists (Production API Format)
+ */
+app.post('/checkParticipant', (_req, _res) => {
+
+	const { lang, source, apiToken, sweepstakesToken, emailOrPhone } = _req.body;
+
+	/* Validate API Token */
+	if (!apiToken || apiToken !== VALID_API_TOKEN) {
+
+		/* Return FALSE */
+		return _res.status(401).json({
+			Response : false,
+			Message  : 'Invalid API token'
+		});
+	}
+
+	/* Validate Sweepstakes Token */
+	if (!sweepstakesToken || !VALID_SWEEPSTAKES_TOKENS[sweepstakesToken]) {
+
+		/* Return FALSE */
+		return _res.status(404).json({
+			Response : false,
+			Message  : 'Sweepstake not found. Invalid sweepstakes token.'
+		});
+	}
+
+	/* Validate Email Or Phone */
+	if (!emailOrPhone) {
+
+		/* Return FALSE */
+		return _res.status(400).json({
+			Response : false,
+			Message  : 'emailOrPhone parameter is required'
+		});
+	}
+
+	/* Determine If Checking By Email Or Phone */
+	const isEmail = emailOrPhone.includes('@');
+
+	/* Find Participant */
+	let participant;
+
+	if (isEmail) {
+
+		participant = participants.find(_p =>
+			_p.sweepstakesToken === sweepstakesToken &&
+			_p.email === emailOrPhone
+		);
+
+	} else {
+
+		participant = participants.find(_p =>
+			_p.sweepstakesToken === sweepstakesToken &&
+			_p.phone === emailOrPhone
+		);
+	}
+
+	/* Return Result */
+	if (participant) {
+
+		/* Return TRUE - Participant Exists */
+		_res.status(200).json({
+			Response       : true,
+			Message        : 'Participant found',
+			Exists         : true,
+			ParticipantId  : participant.participantId,
+			Email          : participant.email,
+			Phone          : participant.phone,
+			EntryNumber    : participant.entryNumber,
+			CreatedAt      : participant.createdAt,
+			Lang           : lang || 'en',
+			Source         : source || 'n8n-integration'
+		});
+
+	} else {
+
+		/* Return TRUE - Participant Does Not Exist */
+		_res.status(200).json({
+			Response : true,
+			Message  : 'Participant not found',
+			Exists   : false,
+			Lang     : lang || 'en',
+			Source   : source || 'n8n-integration'
+		});
+	}
+});
+
+/*
  * Endpoint Used To Inject Participant (Production API Format)
  */
 app.post('/injectParticipant', (_req, _res) => {
