@@ -100,36 +100,22 @@ export class Sweeppea implements INodeType {
 				default: 'create',
 			},
 			{
-				displayName    : 'Sweepstake ID',
-				name           : 'sweepstakeId',
-				type           : 'string',
-				required       : true,
-				displayOptions : {
-					show: {
-						resource  : ['participant'],
-						operation : ['getSchema', 'checkParticipant'],
-					},
-				},
-				default     : '',
-				placeholder : 'summer_2025',
-				description : 'The unique identifier of the sweepstake',
-			},
-			{
 				displayName    : 'Sweepstakes Token',
 				name           : 'sweepstakesToken',
 				type           : 'string',
 				typeOptions    : {
 					password: true,
 				},
+				required       : true,
 				displayOptions : {
 					show: {
 						resource  : ['participant'],
-						operation : ['create'],
+						operation : ["getSchema", "checkParticipant", "create"],
 					},
 				},
 				default     : '',
 				placeholder : '83d12d10-7a6d-4f99-a546-5a1c3cc267f9',
-				description : 'The sweepstakes UUID token (REQUIRED for Production environment, leave empty for Development)',
+				description : 'The sweepstakes UUID token',
 			},
 		{
 			displayName    : 'Email or Phone',
