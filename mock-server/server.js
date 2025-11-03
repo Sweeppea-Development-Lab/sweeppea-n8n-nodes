@@ -652,53 +652,151 @@ app.post('/entrypage/fields', authenticateApiKey, (_req, _res) => {
 	/* Get Sweepstake Name */
 	const sweepstakeName = VALID_SWEEPSTAKES_TOKENS[SweepstakesToken];
 
-	/* Mock Entry Page Fields (API v3 Format) */
+	/* Mock Entry Page Fields (Matching Real API v3 Format) */
 	const formFields = [
 		{
-			Name        : 'First_Name',
-			DisplayName : 'First Name',
-			Type        : 'string',
-			Required    : true,
-			Validation  : { MinLength: 2, MaxLength: 50 },
-			Placeholder : 'John'
+			Id           : '65c26c604af9f1239a3c6117',
+			CreationDate : 1707240544143,
+			Type         : 'text',
+			Name         : 'First Name',
+			Value        : '',
+			Placeholder  : '',
+			MaxLength    : 100,
+			MaxFileSize  : 5,
+			Encrypted    : false,
+			Required     : true,
+			Primary      : false,
+			Disabled     : false,
+			DateFormat   : 'MM/DD/YYYY',
+			Icon         : 'mdi-format-text-rotation-none',
+			Options      : [],
+			Order        : 1
 		},
 		{
-			Name        : 'Last_Name',
-			DisplayName : 'Last Name',
-			Type        : 'string',
-			Required    : true,
-			Validation  : { MinLength: 2, MaxLength: 50 },
-			Placeholder : 'Doe'
+			Id           : '65c26c604af9f1239a3c6118',
+			CreationDate : 1707240544143,
+			Type         : 'text',
+			Name         : 'Last Name',
+			Value        : '',
+			Placeholder  : '',
+			MaxLength    : 100,
+			MaxFileSize  : 5,
+			Encrypted    : false,
+			Required     : true,
+			Primary      : false,
+			Disabled     : false,
+			DateFormat   : 'MM/DD/YYYY',
+			Icon         : 'mdi-format-text-rotation-none',
+			Options      : [],
+			Order        : 2
 		},
 		{
-			Name        : 'Email',
-			DisplayName : 'Email Address',
-			Type        : 'string',
-			Required    : true,
-			Validation  : { Format: 'email' },
-			Placeholder : 'john@example.com'
+			Id           : '65c26c604af9f1239a3c6119',
+			CreationDate : 1707240544143,
+			Type         : 'email',
+			Name         : 'Email',
+			Value        : '',
+			Placeholder  : '',
+			MaxLength    : 100,
+			MaxFileSize  : 5,
+			Encrypted    : false,
+			Required     : true,
+			Primary      : true,
+			Disabled     : false,
+			DateFormat   : 'MM/DD/YYYY',
+			Icon         : 'mdi-at',
+			Options      : [],
+			Order        : 3
 		},
 		{
-			Name        : 'Mobile_Number',
-			DisplayName : 'Phone Number',
-			Type        : 'string',
-			Required    : false,
-			Validation  : { Format: 'phone' },
-			Placeholder : '+1234567890'
+			Id           : '65c26c604af9f1239a3c611a',
+			CreationDate : 1707240544143,
+			Type         : 'usphonenumber',
+			Name         : 'Mobile Number',
+			Value        : '',
+			Placeholder  : 'Will text you if you win',
+			MaxLength    : 100,
+			MaxFileSize  : 5,
+			Encrypted    : false,
+			Required     : true,
+			Primary      : false,
+			Disabled     : false,
+			DateFormat   : 'MM/DD/YYYY',
+			Icon         : 'mdi-cellphone',
+			Options      : [],
+			Order        : 4
+		},
+		{
+			Id           : '68bf5cb6a0c13c05d3fae71a',
+			CreationDate : 1757371574222,
+			Type         : 'birthdate',
+			Name         : 'Birthday',
+			Value        : '',
+			Placeholder  : 'MM/DD/YYYY',
+			MaxLength    : 100,
+			MaxFileSize  : 10,
+			Icon         : 'mdi-calendar-month',
+			Primary      : false,
+			Required     : true,
+			Encrypted    : false,
+			Disabled     : false,
+			DateFormat   : 'MM/DD/YYYY',
+			Options      : [],
+			Order        : 5
+		},
+		{
+			Id           : '68bf6106a0c13c05d3faef94',
+			CreationDate : 1757372678622,
+			Type         : 'list',
+			Name         : 'How did you find us?',
+			Value        : '',
+			Placeholder  : '',
+			MaxLength    : 100,
+			MaxFileSize  : 10,
+			Icon         : 'mdi-form-select',
+			Primary      : false,
+			Required     : true,
+			Encrypted    : false,
+			Disabled     : false,
+			DateFormat   : 'MM/DD/YYYY',
+			Options      : [
+				{ Name: 'Social Media (Facebook  Instagram  LinkedIn  Twitter/X)', Id: 0 },
+				{ Name: 'Google/Search Engine', Id: 1 },
+				{ Name: 'Friend or Family Referral', Id: 2 },
+				{ Name: 'Online Advertisement', Id: 3 },
+				{ Name: 'Other', Id: 4 }
+			],
+			Order        : 6
+		},
+		{
+			Id           : '68bf628ea0c13c05d3fafb1d',
+			CreationDate : 1757373070018,
+			Type         : 'number',
+			Name         : 'How many cups of coffee do you drink per day?',
+			Value        : '',
+			Placeholder  : '1 - 10',
+			MaxLength    : '2',
+			MaxFileSize  : 10,
+			Icon         : 'mdi-counter',
+			Primary      : false,
+			Required     : true,
+			Encrypted    : false,
+			Disabled     : false,
+			DateFormat   : 'MM/DD/YYYY',
+			Options      : [],
+			Order        : 7
 		}
 	];
 
 	/* Return TRUE */
 	_res.status(200).json({
 		Response : true,
-		Message  : 'Entry page fields retrieved successfully',
 		Data     : {
-			SweepstakeName   : sweepstakeName,
 			SweepstakesToken : SweepstakesToken,
+			EntryPageToken   : `ep_${Date.now()}_${Math.random().toString(36).substring(7)}`,
 			FormFields       : formFields,
-			KeyEmail         : 'Email',
-			KeyPhoneNumber   : 'Mobile_Number',
-			EntryPageToken   : `ep_${Date.now()}_${Math.random().toString(36).substring(7)}`
+			KeyEmail         : '',
+			KeyPhoneNumber   : ''
 		}
 	});
 });
