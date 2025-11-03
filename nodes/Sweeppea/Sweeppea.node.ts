@@ -78,18 +78,12 @@ export class Sweeppea implements INodeType {
 					},
 				},
 				options: [
-				{
-					name        : 'Get Schema',
-					value       : 'getSchema',
-					description : 'Get the required fields for a sweepstake (useful for dynamic forms/chatbots)',
-					action      : 'Get sweepstake schema',
-				},
-			{
-				name        : 'Check Participant',
-				value       : 'checkParticipant',
-				description : 'Check if an email is already registered in a sweepstake',
-				action      : 'Check if participant exists',
-			},
+					{
+						name        : 'Get Schema',
+						value       : 'getSchema',
+						description : 'Get the required fields for a sweepstake (useful for dynamic forms/chatbots)',
+						action      : 'Get sweepstake schema',
+					},
 					{
 						name        : 'Create',
 						value       : 'create',
@@ -110,28 +104,13 @@ export class Sweeppea implements INodeType {
 				displayOptions : {
 					show: {
 						resource  : ['participant'],
-						operation : ["getSchema", "checkParticipant", "create"],
+						operation : ["getSchema", "create"],
 					},
 				},
 				default     : '',
 				placeholder : '83d12d10-7a6d-4f99-a546-5a1c3cc267f9',
 				description : 'The sweepstakes UUID token',
 			},
-		{
-			displayName    : 'Email or Phone',
-			name           : 'emailOrPhone',
-			type           : 'string',
-			required       : true,
-			displayOptions : {
-				show: {
-					resource  : ['participant'],
-					operation : ['checkParticipant'],
-				},
-			},
-			default     : '',
-			placeholder : 'user@example.com or 5551234567',
-			description : 'The email address or phone number (10 digits) to check',
-		},
 			{
 				displayName    : 'Additional Fields',
 				name           : 'additionalFields',
@@ -141,7 +120,7 @@ export class Sweeppea implements INodeType {
 				displayOptions : {
 					show: {
 						resource  : ['participant'],
-						operation : ['getSchema', 'checkParticipant', 'create'],
+						operation : ['getSchema', 'create'],
 					},
 				},
 				options: [
@@ -189,32 +168,51 @@ export class Sweeppea implements INodeType {
 			
 		if (operation === 'getSchema') {
 
-			/* Get Schema Operation - Returns Fields Structure */
+			/* Get Schema Operation - Fetch Entry Page Fields */
 			for (let i = 0; i < items.length; i++) {
 
 				try {
 
 					const sweepstakesToken = this.getNodeParameter('sweepstakesToken', i) as string;
-					const apiToken         = isProduction ? credentials.apiToken as string : credentials.apiKey as string;
 
-					/* Build Request Body */
-					const requestBody = {
-						lang             : 'en',
-						source           : 'n8n-integration',
-						apiToken         : apiToken,
-						sweepstakesToken : sweepstakesToken,
-					};
+					let schemaResponse: any;
 
-					/* Call Sweeppea API */
-					const schemaResponse = await this.helpers.request({
-						method  : 'POST',
-						url     : `${baseUrl}/getSchema`,
-						body    : requestBody,
-						json    : true,
-						headers : {
-							'Content-Type': 'application/json',
-						},
-					});
+					if (isProduction) {
+
+						/* Production: API v3 with Bearer Auth */
+						const apiToken = credentials.apiToken as string;
+
+						schemaResponse = await this.helpers.request({
+							method  : 'POST',
+							url     : `https://api-v3.sweeppea.com/entrypage/fields`,
+							body    : {
+								SweepstakesToken: sweepstakesToken,
+							},
+							json    : true,
+							headers : {
+								'Content-Type'  : 'application/json',
+								'Authorization' : `Bearer ${apiToken}`,
+							},
+						});
+
+					} else {
+
+						/* Development: Mock Server */
+						const apiToken = credentials.apiKey as string;
+
+						schemaResponse = await this.helpers.request({
+							method  : 'POST',
+							url     : `${baseUrl}/entrypage/fields`,
+							body    : {
+								SweepstakesToken: sweepstakesToken,
+							},
+							json    : true,
+							headers : {
+								'Content-Type'  : 'application/json',
+								'Authorization' : `Bearer ${apiToken}`,
+							},
+						});
+					}
 
 					if (!schemaResponse.Response) {
 
@@ -239,105 +237,6 @@ export class Sweeppea implements INodeType {
 						throw new NodeOperationError(
 							this.getNode(),
 							`Sweepstake not found. Please verify the Sweepstakes Token is correct.`,
-							{ itemIndex: i },
-						);
-					}
-
-					/* If Continue On Fail Is Enabled, Add Error To Result */
-					if (this.continueOnFail()) {
-
-						returnData.push({
-							json: {
-								error     : error.message,
-								itemIndex : i,
-							},
-							pairedItem: { item: i },
-						});
-
-						continue;
-					}
-
-					/* Re-Throw Error If Cannot Handle */
-					throw error;
-				}
-			}
-
-		} else if (operation === 'checkParticipant') {
-
-			/* Check Participant Operation - Verify If Email Or Phone Exists */
-			for (let i = 0; i < items.length; i++) {
-
-				try {
-
-					const sweepstakesToken = this.getNodeParameter('sweepstakesToken', i) as string;
-					const emailOrPhone     = this.getNodeParameter('emailOrPhone', i) as string;
-					const apiToken         = isProduction ? credentials.apiToken as string : credentials.apiKey as string;
-
-					/* Determine If Input Is Email Or Phone */
-					const isEmail = emailOrPhone.includes('@');
-
-					if (!isEmail && emailOrPhone.length !== 10) {
-
-						throw new NodeOperationError(
-							this.getNode(),
-							`Phone number must be exactly 10 digits. Received: ${emailOrPhone.length} characters.`,
-							{ itemIndex: i },
-						);
-					}
-
-					/* Build Request Body */
-					const requestBody = {
-						lang             : 'en',
-						source           : 'n8n-integration',
-						apiToken         : apiToken,
-						sweepstakesToken : sweepstakesToken,
-						emailOrPhone     : emailOrPhone,
-					};
-
-					/* Call Sweeppea API */
-					const checkResponse = await this.helpers.request({
-						method  : 'POST',
-						url     : `${baseUrl}/checkParticipant`,
-						body    : requestBody,
-						json    : true,
-						headers : {
-							'Content-Type': 'application/json',
-						},
-					});
-
-					if (!checkResponse.Response) {
-
-						throw new NodeOperationError(
-							this.getNode(),
-							`Failed to check participant: ${checkResponse.Message || 'Unknown error'}`,
-							{ itemIndex: i },
-						);
-					}
-
-					/* Return Check Result */
-					returnData.push({
-						json       : checkResponse as IDataObject,
-						pairedItem : { item: i },
-					});
-
-				} catch (error) {
-
-					/* Handle API-Specific Errors */
-					if (error.httpCode === 404) {
-
-						throw new NodeOperationError(
-							this.getNode(),
-							`Sweepstake not found. Please verify the Sweepstakes Token is correct.`,
-							{ itemIndex: i },
-						);
-
-					} else if (error.httpCode === 400) {
-
-						const errorMessage = error.response?.body?.message || 'Bad Request';
-
-						throw new NodeOperationError(
-							this.getNode(),
-							errorMessage,
 							{ itemIndex: i },
 						);
 					}

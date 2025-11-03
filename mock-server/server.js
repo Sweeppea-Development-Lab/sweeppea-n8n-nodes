@@ -633,24 +633,14 @@ app.post('/getSchema', (_req, _res) => {
 });
 
 /*
- * Endpoint Used To Check If Participant Exists (Production API Format)
+ * Endpoint Used To Get Entry Page Fields (API v3 Format With Bearer Auth)
  */
-app.post('/checkParticipant', (_req, _res) => {
+app.post('/entrypage/fields', authenticateApiKey, (_req, _res) => {
 
-	const { lang, source, apiToken, sweepstakesToken, emailOrPhone } = _req.body;
-
-	/* Validate API Token */
-	if (!apiToken || apiToken !== VALID_API_TOKEN) {
-
-		/* Return FALSE */
-		return _res.status(401).json({
-			Response : false,
-			Message  : 'Invalid API token'
-		});
-	}
+	const { SweepstakesToken } = _req.body;
 
 	/* Validate Sweepstakes Token */
-	if (!sweepstakesToken || !VALID_SWEEPSTAKES_TOKENS[sweepstakesToken]) {
+	if (!SweepstakesToken || !VALID_SWEEPSTAKES_TOKENS[SweepstakesToken]) {
 
 		/* Return FALSE */
 		return _res.status(404).json({
@@ -659,65 +649,58 @@ app.post('/checkParticipant', (_req, _res) => {
 		});
 	}
 
-	/* Validate Email Or Phone */
-	if (!emailOrPhone) {
+	/* Get Sweepstake Name */
+	const sweepstakeName = VALID_SWEEPSTAKES_TOKENS[SweepstakesToken];
 
-		/* Return FALSE */
-		return _res.status(400).json({
-			Response : false,
-			Message  : 'emailOrPhone parameter is required'
-		});
-	}
+	/* Mock Entry Page Fields (API v3 Format) */
+	const formFields = [
+		{
+			Name        : 'First_Name',
+			DisplayName : 'First Name',
+			Type        : 'string',
+			Required    : true,
+			Validation  : { MinLength: 2, MaxLength: 50 },
+			Placeholder : 'John'
+		},
+		{
+			Name        : 'Last_Name',
+			DisplayName : 'Last Name',
+			Type        : 'string',
+			Required    : true,
+			Validation  : { MinLength: 2, MaxLength: 50 },
+			Placeholder : 'Doe'
+		},
+		{
+			Name        : 'Email',
+			DisplayName : 'Email Address',
+			Type        : 'string',
+			Required    : true,
+			Validation  : { Format: 'email' },
+			Placeholder : 'john@example.com'
+		},
+		{
+			Name        : 'Mobile_Number',
+			DisplayName : 'Phone Number',
+			Type        : 'string',
+			Required    : false,
+			Validation  : { Format: 'phone' },
+			Placeholder : '+1234567890'
+		}
+	];
 
-	/* Determine If Checking By Email Or Phone */
-	const isEmail = emailOrPhone.includes('@');
-
-	/* Find Participant */
-	let participant;
-
-	if (isEmail) {
-
-		participant = participants.find(_p =>
-			_p.sweepstakesToken === sweepstakesToken &&
-			_p.email === emailOrPhone
-		);
-
-	} else {
-
-		participant = participants.find(_p =>
-			_p.sweepstakesToken === sweepstakesToken &&
-			_p.phone === emailOrPhone
-		);
-	}
-
-	/* Return Result */
-	if (participant) {
-
-		/* Return TRUE - Participant Exists */
-		_res.status(200).json({
-			Response       : true,
-			Message        : 'Participant found',
-			Exists         : true,
-			ParticipantId  : participant.participantId,
-			Email          : participant.email,
-			Phone          : participant.phone,
-			EntryNumber    : participant.entryNumber,
-			CreatedAt      : participant.createdAt,
-			Lang           : lang || 'en',
-			Source         : source || 'n8n-integration'
-		});
-
-	} else {
-
-		/* Return TRUE - Participant Does Not Exist */
-		_res.status(200).json({
-			Response : true,
-			Message  : 'Participant not found',
-			Exists   : false,
-			Lang     : lang || 'en',
-			Source   : source || 'n8n-integration'
-		});
-	}
+	/* Return TRUE */
+	_res.status(200).json({
+		Response : true,
+		Message  : 'Entry page fields retrieved successfully',
+		Data     : {
+			SweepstakeName   : sweepstakeName,
+			SweepstakesToken : SweepstakesToken,
+			FormFields       : formFields,
+			KeyEmail         : 'Email',
+			KeyPhoneNumber   : 'Mobile_Number',
+			EntryPageToken   : `ep_${Date.now()}_${Math.random().toString(36).substring(7)}`
+		}
+	});
 });
 
 /*
@@ -849,7 +832,10 @@ app.listen(PORT, () => {
 	console.log(`📡 Running on: http://localhost:${PORT}`);
 	console.log(`🔑 Test API Token: ${VALID_API_TOKEN}`);
 	console.log(`🎫 Test Sweepstakes Token: 83d12d10-7a6d-4f99-a546-5a1c3cc267f9`);
+	console.log(`\n📚 API v3 Endpoints (Bearer auth):`);
+	console.log(`   POST /entrypage/fields`);
 	console.log(`\n📚 Production API Format:`);
+	console.log(`   POST /getSchema (legacy, token in body)`);
 	console.log(`   POST /injectParticipant (no auth header, token in body)`);
 	console.log(`\n📚 Legacy Endpoints (Bearer auth):`);
 	console.log(`   GET  /health`);
