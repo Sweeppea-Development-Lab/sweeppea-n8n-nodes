@@ -182,7 +182,7 @@ export class Sweeppea implements INodeType {
 						/* Production: API v3 with Bearer Auth */
 						const apiToken = credentials.apiToken as string;
 
-						schemaResponse = await this.helpers.request({
+						schemaResponse = await this.helpers.httpRequest({
 							method  : 'POST',
 							url     : `https://api-v3.sweeppea.com/entrypage/fields`,
 							body    : {
@@ -200,7 +200,7 @@ export class Sweeppea implements INodeType {
 						/* Development: Mock Server */
 						const apiToken = credentials.apiKey as string;
 
-						schemaResponse = await this.helpers.request({
+						schemaResponse = await this.helpers.httpRequest({
 							method  : 'POST',
 							url     : `${baseUrl}/entrypage/fields`,
 							body    : {
@@ -269,6 +269,7 @@ export class Sweeppea implements INodeType {
 
 						const inputData    = items[i].json;
 
+
 						let createResponse: any;
 
 						if (isProduction) {
@@ -291,8 +292,9 @@ export class Sweeppea implements INodeType {
 								},
 							};
 
+
 							/* Call Real Sweeppea API (No Auth Header Needed - Token In Body) */
-							createResponse = await this.helpers.request({
+							createResponse = await this.helpers.httpRequest({
 								method  : 'POST',
 								url     : `${baseUrl}/injectParticipant`,
 								body    : requestBody,
@@ -323,7 +325,7 @@ export class Sweeppea implements INodeType {
 					};
 
 					/* Call Mock Sweeppea API (No Auth Header Needed - Token In Body) */
-					createResponse = await this.helpers.request({
+					createResponse = await this.helpers.httpRequest({
 						method  : 'POST',
 						url     : `${baseUrl}/injectParticipant`,
 						body    : requestBody,
