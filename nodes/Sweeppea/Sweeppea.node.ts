@@ -284,15 +284,10 @@ export class Sweeppea implements INodeType {
 								apiToken         : apiToken,
 								sweepstakesToken : sweepstakesToken,
 								entryPageFields  : {
-									KeyPhoneNumber : inputData.phone || inputData.Mobile_Number || '',
-									KeyEmail       : inputData.email || inputData.Email || '',
-									BonusEntries   : String(inputData.bonusEntries || 0),
-									Fields         : {
-										First_Name    : inputData.firstName || inputData.First_Name || '',
-										Last_Name     : inputData.lastName || inputData.Last_Name || '',
-										Email         : inputData.email || inputData.Email || '',
-										Mobile_Number : inputData.phone || inputData.Mobile_Number || '',
-									},
+									KeyPhoneNumber : inputData.KeyPhoneNumber || '',
+									KeyEmail       : inputData.KeyEmail || '',
+									BonusEntries   : String(inputData.BonusEntries || 0),
+									Fields         : inputData.Fields || {},
 								},
 							};
 
@@ -320,15 +315,10 @@ export class Sweeppea implements INodeType {
 						apiToken         : apiToken,
 						sweepstakesToken : sweepstakesToken,
 						entryPageFields  : {
-							KeyPhoneNumber : inputData.phone || inputData.Mobile_Number || '',
-							KeyEmail       : inputData.email || inputData.Email || '',
-							BonusEntries   : String(inputData.bonusEntries || 0),
-							Fields         : {
-								First_Name    : inputData.firstName || inputData.First_Name || '',
-								Last_Name     : inputData.lastName || inputData.Last_Name || '',
-								Email         : inputData.email || inputData.Email || '',
-								Mobile_Number : inputData.phone || inputData.Mobile_Number || '',
-							},
+							KeyPhoneNumber : inputData.KeyPhoneNumber || '',
+							KeyEmail       : inputData.KeyEmail || '',
+							BonusEntries   : String(inputData.BonusEntries || 0),
+							Fields         : inputData.Fields || {},
 						},
 					};
 
