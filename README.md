@@ -1,37 +1,126 @@
-# N8N Sweeppea Integration
+# n8n-nodes-sweeppea
 
-Custom N8N node for integrating with Sweeppea's platform.
+This is an n8n community node. It lets you use Sweeppea in your n8n workflows.
 
-## 🚧 Status
+[Sweeppea](https://sweeppea.com) is a sweepstakes management platform that helps businesses create and manage promotional campaigns, contests, and giveaways.
 
-In active development.
+[n8n](https://n8n.io/) is a [fair-code licensed](https://docs.n8n.io/reference/license/) workflow automation platform.
 
-## 🎯 Features
+[Installation](#installation)
+[Operations](#operations)
+[Credentials](#credentials)
+[Compatibility](#compatibility)
+[Usage](#usage)
+[Resources](#resources)
+[Version history](#version-history)
 
-- Dynamic field loading based on sweepstake configuration
-- Support for multiple field types (string, number, boolean, options)
-- Automatic validation
-- Multi-environment support (development, staging, production)
+## Installation
 
-## 📦 Structure
+Follow the [installation guide](https://docs.n8n.io/integrations/community-nodes/installation/) in the n8n community nodes documentation.
 
-sweeppea-n8n-nodes/
-├── nodes/Sweeppea/       # Main node implementation
-├── credentials/          # API authentication
-├── mock-server/         # Development mock API
-└── package.json
+## Operations
 
-## 🚀 Development
+### Participant
 
-Install dependencies:
-npm install
+- **Get Schema** - Retrieve the dynamic entry form fields for a specific sweepstake (useful for building chatbots or dynamic forms)
+- **Create** - Register a new participant in a sweepstake with dynamic field support
 
-Build:
-npm run build
+## Credentials
 
-Development mode:
-npm run dev
+You'll need to configure your Sweeppea API credentials:
 
-Sweeppea Development Lab
+1. **API Token/Key** - Your Sweeppea API authentication token
+2. **Environment** - Select your target environment:
+   - Production (https://api.sweeppea.com)
+   - Development (for local testing with custom API URL)
 
-© 2025 Sweeppea
+### How to get your API credentials
+
+1. Log in to your Sweeppea account
+2. Navigate to Settings → API Credentials
+3. Generate or copy your API token
+4. Use this token in the n8n credential configuration
+
+## Compatibility
+
+- Minimum n8n version: 0.199.0
+- Tested with n8n version: 1.0.0+
+
+## Usage
+
+### Dynamic Field Support
+
+The Sweeppea node supports fully dynamic form fields. Each sweepstake can have different fields configured in the Sweeppea platform, and the node automatically adapts to these fields.
+
+**Example workflow:**
+
+1. Use **Get Schema** operation to fetch the required fields for a sweepstake
+2. Build a dynamic form or chatbot that collects the required data
+3. Use **Create** operation to register the participant with the collected data
+
+### AI Chatbot Integration
+
+This node works seamlessly with AI agents (OpenAI, Anthropic, etc.) to create conversational participant registration flows:
+
+1. Fetch sweepstake schema
+2. Build dynamic system prompt with required fields
+3. AI agent collects data conversationally
+4. Transform AI response to API format
+5. Create participant automatically
+
+### Field Name Format
+
+When submitting participant data, field names should use underscores instead of spaces:
+- "First Name" → `First_Name`
+- "How did you find us?" → `How_did_you_find_us?`
+
+The node expects data in this format:
+
+```json
+{
+  "KeyEmail": "user@example.com",
+  "KeyPhoneNumber": "1234567890",
+  "BonusEntries": 0,
+  "Fields": {
+    "First_Name": "John",
+    "Last_Name": "Doe",
+    "Email": "user@example.com",
+    "Mobile_Number": "1234567890",
+    "Custom_Field": "value"
+  }
+}
+```
+
+## Resources
+
+- [n8n community nodes documentation](https://docs.n8n.io/integrations/community-nodes/)
+- [Sweeppea Platform](https://sweeppea.com)
+- [Sweeppea API Documentation](https://api.sweeppea.com/docs)
+
+## Version history
+
+### 0.1.0 (2025-01-11)
+
+**Initial Release**
+
+- Dynamic field loading based on sweepstake configuration (API v3)
+- Support for Get Schema operation
+- Support for Create Participant operation
+- Multi-environment support (production, development)
+- Automatic field validation
+- Support for multiple field types:
+  - Text fields
+  - Email
+  - Phone numbers (US format)
+  - Dates/Birthdate
+  - Numbers
+  - Select lists
+- AI chatbot integration support
+
+## License
+
+[MIT](LICENSE.md)
+
+---
+
+© 2025 Sweeppea Development Lab
