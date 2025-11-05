@@ -1,15 +1,22 @@
 {
 	"name": "n8n-nodes-sweeppea",
 	"version": "0.1.0",
-	"description": "N8N node for Sweeppea sweepstakes platform",
+	"description": "N8N community node for integrating Sweeppea sweepstakes platform with dynamic field support and AI chatbot integration",
 	"keywords": [
 		"n8n-community-node-package",
 		"n8n",
 		"sweeppea",
-		"sweepstakes"
+		"sweepstakes",
+		"giveaways",
+		"contests",
+		"chatbot",
+		"ai-integration"
 	],
 	"license": "MIT",
-	"homepage": "https://sweeppea.com",
+	"homepage": "https://github.com/Sweeppea-Development-Lab/sweeppea-n8n-nodes#readme",
+	"bugs": {
+		"url": "https://github.com/Sweeppea-Development-Lab/sweeppea-n8n-nodes/issues"
+	},
 	"author": {
 		"name": "Sweeppea Development Lab",
 		"email": "dev@sweeppea.com"
