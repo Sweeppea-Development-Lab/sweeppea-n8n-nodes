@@ -21,7 +21,7 @@ import {
 	NodeOperationError,
 } from 'n8n-workflow';
 
-/**
+/*
  * Sweeppea Node Implementation
  * Allows creating participants in sweepstakes through N8N workflows
  */
@@ -136,7 +136,7 @@ export class Sweeppea implements INodeType {
 		],
 	};
 
-	/**
+	/*
 	 * Execute Node Logic
 	 * Processes each item in the workflow and creates participants
 	 */
