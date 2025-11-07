@@ -1,9 +1,11 @@
 {
-	"node": "n8n-nodes-base.sweeppea",
+	"node": "n8n-nodes-sweeppea.sweeppea",
 	"nodeVersion": "1.0",
 	"codexVersion": "1.0",
 	"categories": [
-		"Marketing & Content"
+		"Marketing & Content",
+		"Sales & CRM",
+		"Data & Storage"
 	],
 	"resources": {
 		"credentialDocumentation": [
@@ -15,12 +17,28 @@
 			{
 				"url": "https://docs.sweeppea.com"
 			}
+		],
+		"generic": [
+			{
+				"label": "API Documentation",
+				"url": "https://apidocs.sweeppea.com/"
+			},
+			{
+				"label": "Getting Started Guide",
+				"url": "https://docs.sweeppea.com/getting-started"
+			}
 		]
 	},
 	"alias": [
 		"sweepstakes",
 		"giveaway",
 		"lottery",
-		"raffle"
+		"raffle",
+		"contest",
+		"prize",
+		"promotional",
+		"campaign",
+		"participant",
+		"registration"
 	]
 }
