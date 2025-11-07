@@ -282,7 +282,7 @@ Good luck! 🍀"
 {
   "lang": "en",
   "source": "n8n-integration",
-  "apiToken": "dbb6fb5a-24e2-4dda-b1f5-02a28468dac8",
+  "apiToken": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
   "sweepstakesToken": "965a7edb-1f46-4116-a394-9c8a63769284",
   "entryPageFields": {
     "KeyPhoneNumber": "1234567890",
@@ -339,7 +339,7 @@ curl -X POST https://d2e1p15gger19t.cloudfront.net/prod/api-v2/injectParticipant
   -d '{
     "lang": "en",
     "source": "curl",
-    "apiToken": "dbb6fb5a-24e2-4dda-b1f5-02a28468dac8",
+    "apiToken": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
     "sweepstakesToken": "965a7edb-1f46-4116-a394-9c8a63769284",
     "entryPageFields": {
       "KeyPhoneNumber": "1234567890",

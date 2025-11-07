@@ -13,7 +13,6 @@
 */
 
 import {
-	IAuthenticateGeneric,
 	ICredentialType,
 	INodeProperties,
 } from 'n8n-workflow';
@@ -56,7 +55,7 @@ export class SweeppeaApi implements ICredentialType {
 			default       : '',
 			required      : true,
 			description   : 'Your Sweeppea API token (UUID format)',
-			placeholder   : 'dbb6fb5a-24e2-4dda-b1f5-02a28468dac8',
+			placeholder   : 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx',
 			displayOptions: {
 				show: {
 					environment: ['production'],
@@ -95,13 +94,4 @@ export class SweeppeaApi implements ICredentialType {
 			},
 		},
 	];
-
-	authenticate: IAuthenticateGeneric = {
-		type       : 'generic',
-		properties : {
-			headers: {
-				Authorization: '=Bearer {{$credentials.apiKey}}',
-			},
-		},
-	};
 }

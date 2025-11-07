@@ -165,7 +165,7 @@ export class Sweeppea implements INodeType {
 
 		if (resource === 'participant') {
 
-			
+		
 		if (operation === 'getSchema') {
 
 			/* Get Schema Operation - Fetch Entry Page Fields */
@@ -268,7 +268,6 @@ export class Sweeppea implements INodeType {
 					try {
 
 						const inputData    = items[i].json;
-
 
 						let createResponse: any;
 
