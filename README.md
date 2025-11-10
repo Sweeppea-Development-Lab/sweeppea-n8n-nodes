@@ -1,6 +1,6 @@
-# n8n-nodes-sweeppea
+# Sweeppea Node for n8n
 
-This is an n8n community node. It lets you use Sweeppea in your n8n workflows.
+Community node for integrating Sweeppea sweepstakes platform with n8n workflows.
 
 [Sweeppea](https://sweeppea.com) is a sweepstakes management platform that helps businesses create and manage promotional campaigns, contests, and giveaways.
 
