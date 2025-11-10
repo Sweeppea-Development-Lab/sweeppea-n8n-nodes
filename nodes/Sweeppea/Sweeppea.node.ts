@@ -6,7 +6,7 @@
 	                    |_|  |_|
 
 	Platform  : Sweeppea N8N Integration
-	Version   : 1.0
+	Version   : 0.1.0
 	Path      : /nodes/Sweeppea/Sweeppea.node.ts
 
 	(c) Sweeppea, all rights reserved.
