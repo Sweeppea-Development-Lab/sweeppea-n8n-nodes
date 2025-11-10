@@ -10,12 +10,12 @@
 	"resources": {
 		"credentialDocumentation": [
 			{
-				"url": "https://docs.sweeppea.com/authentication"
+				"url": "https://github.com/Sweeppea-Development-Lab/sweeppea-n8n-nodes#credentials"
 			}
 		],
 		"primaryDocumentation": [
 			{
-				"url": "https://docs.sweeppea.com"
+				"url": "https://github.com/Sweeppea-Development-Lab/sweeppea-n8n-nodes#readme"
 			}
 		],
 		"generic": [
