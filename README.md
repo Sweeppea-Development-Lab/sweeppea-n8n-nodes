@@ -91,6 +91,42 @@ The node expects data in this format:
 }
 ```
 
+## Example Workflows
+
+This package includes ready-to-import example workflows in the `/examples` folder:
+
+### 1. Simple Participant Registration
+**File:** `sweeppea-create-participant.json`
+
+A straightforward workflow that collects participant data through an AI chatbot:
+- AI Agent asks for First Name, Last Name, Email, and Mobile Number conversationally
+- Transform node converts the collected data to Sweeppea API format
+- Creates participant in the sweepstake
+
+**How to use:**
+1. Import the workflow JSON file into your n8n instance
+2. Configure your Sweeppea credentials
+3. Replace `YOUR_SWEEPSTAKES_TOKEN_HERE` with your actual sweepstakes token
+4. Activate the workflow
+
+### 2. Dynamic Schema Registration
+**File:** `sweeppea-create-participant-dynamic.json`
+
+An advanced workflow that automatically adapts to any sweepstake configuration:
+- Fetches the sweepstake schema dynamically from the API
+- Builds a custom AI system prompt based on required fields
+- AI Agent collects all fields conversationally (even optional ones)
+- Transform node dynamically maps collected data to API format
+- Creates participant with all custom fields
+
+**How to use:**
+1. Import the workflow JSON file into your n8n instance
+2. Configure your Sweeppea credentials
+3. Replace `YOUR_SWEEPSTAKES_TOKEN_HERE` with your actual sweepstakes token (appears in 2 nodes)
+4. Activate the workflow
+
+**Note:** The dynamic workflow automatically adapts to any sweepstake configuration, making it ideal for use across multiple campaigns with different field requirements.
+
 ## Resources
 
 - [n8n community nodes documentation](https://docs.n8n.io/integrations/community-nodes/)
