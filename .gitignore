@@ -30,6 +30,9 @@ coverage/
 # N8N
 .n8n/
 
-# Claude Code
+# Development & Internal Documentation
 .claude/
 CLAUDE.md
+INTEGRATION_GUIDE.md
+N8N_VERIFICATION_CHECKLIST.md
+mock-server/
