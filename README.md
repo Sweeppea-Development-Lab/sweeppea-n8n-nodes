@@ -98,6 +98,8 @@ This package includes ready-to-import example workflows in the `/examples` folde
 ### 1. Simple Participant Registration
 **File:** `sweeppea-create-participant.json`
 
+![Simple Workflow](examples/sweeppea-create-participant.png)
+
 A straightforward workflow that collects participant data through an AI chatbot:
 - AI Agent asks for First Name, Last Name, Email, and Mobile Number conversationally
 - Transform node converts the collected data to Sweeppea API format
@@ -111,6 +113,8 @@ A straightforward workflow that collects participant data through an AI chatbot:
 
 ### 2. Dynamic Schema Registration
 **File:** `sweeppea-create-participant-dynamic.json`
+
+![Dynamic Workflow](examples/sweeppea-create-participant-dynamic.png)
 
 An advanced workflow that automatically adapts to any sweepstake configuration:
 - Fetches the sweepstake schema dynamically from the API
