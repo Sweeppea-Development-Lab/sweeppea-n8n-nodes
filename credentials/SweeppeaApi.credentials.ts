@@ -6,7 +6,7 @@
 	                    |_|  |_|
 
 	Platform  : Sweeppea N8N Integration
-	Version   : 1.0
+	Version   : 0.1.0
 	Path      : /credentials/SweeppeaApi.credentials.ts
 
 	(c) Sweeppea, all rights reserved.
@@ -25,7 +25,7 @@ export class SweeppeaApi implements ICredentialType {
 
 	name        = 'sweeppeaApi';
 	displayName = 'Sweeppea API';
-	documentationUrl = 'https://docs.sweeppea.com';
+	documentationUrl = 'https://apidocs.sweeppea.com/index.html';
 
 	properties: INodeProperties[] = [
 		{
