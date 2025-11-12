@@ -111,10 +111,10 @@ A straightforward workflow that collects participant data through an AI chatbot:
 3. Replace `YOUR_SWEEPSTAKES_TOKEN_HERE` with your actual sweepstakes token
 4. Activate the workflow
 
-### 2. Dynamic Schema Registration
-**File:** `sweeppea-create-participant-dynamic.json`
+### 2. Dynamic Form Registration
+**File:** `sweeppea-create-participant-dynamic-form.json`
 
-![Dynamic Workflow](examples/sweeppea-create-participant-dynamic.png)
+![Dynamic Workflow](examples/sweeppea-create-participant-dynamic-form.png)
 
 An advanced workflow that automatically adapts to any sweepstake configuration:
 - Fetches the sweepstake schema dynamically from the API
