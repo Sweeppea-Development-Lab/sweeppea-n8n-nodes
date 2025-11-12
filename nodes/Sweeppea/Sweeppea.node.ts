@@ -79,10 +79,10 @@ export class Sweeppea implements INodeType {
 				},
 				options: [
 					{
-						name        : 'Get Schema',
-						value       : 'getSchema',
-						description : 'Get the required fields for a sweepstake (useful for dynamic forms/chatbots)',
-						action      : 'Get sweepstake schema',
+						name        : 'Get Form Fields',
+						value       : 'getFormFields',
+						description : 'Get the entry form fields for a sweepstake',
+						action      : 'Get sweepstake form fields',
 					},
 					{
 						name        : 'Create',
@@ -104,12 +104,12 @@ export class Sweeppea implements INodeType {
 				displayOptions : {
 					show: {
 						resource  : ['participant'],
-						operation : ["getSchema", "create"],
+						operation : ["getFormFields", "create"],
 					},
 				},
 				default     : '',
-				placeholder : '83d12d10-7a6d-4f99-a546-5a1c3cc267f9',
-				description : 'The sweepstakes UUID token',
+				placeholder : 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx',
+				description : 'The unique identifier (UUID) for your sweepstake campaign',
 			},
 			{
 				displayName    : 'Additional Fields',
@@ -120,7 +120,7 @@ export class Sweeppea implements INodeType {
 				displayOptions : {
 					show: {
 						resource  : ['participant'],
-						operation : ['getSchema', 'create'],
+						operation : ['getFormFields', 'create'],
 					},
 				},
 				options: [
@@ -166,9 +166,9 @@ export class Sweeppea implements INodeType {
 		if (resource === 'participant') {
 
 		
-		if (operation === 'getSchema') {
+		if (operation === 'getFormFields') {
 
-			/* Get Schema Operation - Fetch Entry Page Fields */
+			/* Get Form Fields Operation - Fetch Entry Page Fields */
 			for (let i = 0; i < items.length; i++) {
 
 				try {
@@ -218,12 +218,12 @@ export class Sweeppea implements INodeType {
 
 						throw new NodeOperationError(
 							this.getNode(),
-							`Failed to fetch sweepstake schema: ${schemaResponse.Message || 'Unknown error'}`,
+							`Failed to fetch sweepstake form fields: ${schemaResponse.Message || 'Unknown error'}`,
 							{ itemIndex: i },
 						);
 					}
 
-					/* Return Schema Data */
+					/* Return Form Fields Data */
 					returnData.push({
 						json       : schemaResponse as IDataObject,
 						pairedItem : { item: i },
