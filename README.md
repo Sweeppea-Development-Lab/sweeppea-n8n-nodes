@@ -22,7 +22,7 @@ Follow the [installation guide](https://docs.n8n.io/integrations/community-nodes
 
 ### Participant
 
-- **Get Schema** - Retrieve the dynamic entry form fields for a specific sweepstake (useful for building chatbots or dynamic forms)
+- **Get Form Fields** - Retrieve the dynamic entry form fields for a specific sweepstake (useful for building chatbots or dynamic forms)
 - **Create** - Register a new participant in a sweepstake with dynamic field support
 
 ## Credentials
@@ -54,7 +54,7 @@ The Sweeppea node supports fully dynamic form fields. Each sweepstake can have d
 
 **Example workflow:**
 
-1. Use **Get Schema** operation to fetch the required fields for a sweepstake
+1. Use **Get Form Fields** operation to fetch the required fields for a sweepstake
 2. Build a dynamic form or chatbot that collects the required data
 3. Use **Create** operation to register the participant with the collected data
 
@@ -62,7 +62,7 @@ The Sweeppea node supports fully dynamic form fields. Each sweepstake can have d
 
 This node works seamlessly with AI agents (OpenAI, Anthropic, etc.) to create conversational participant registration flows:
 
-1. Fetch sweepstake schema
+1. Fetch sweepstake form fields
 2. Build dynamic system prompt with required fields
 3. AI agent collects data conversationally
 4. Transform AI response to API format
@@ -117,8 +117,8 @@ A straightforward workflow that collects participant data through an AI chatbot:
 ![Dynamic Workflow](examples/sweeppea-create-participant-dynamic-form.png)
 
 An advanced workflow that automatically adapts to any sweepstake configuration:
-- Fetches the sweepstake schema dynamically from the API
-- Builds a custom AI system prompt based on required fields
+- Fetches the sweepstake form fields dynamically from the API
+- Builds a custom AI system prompt based on the field configuration
 - AI Agent collects all fields conversationally (even optional ones)
 - Transform node dynamically maps collected data to API format
 - Creates participant with all custom fields
@@ -135,7 +135,7 @@ An advanced workflow that automatically adapts to any sweepstake configuration:
 
 - [n8n community nodes documentation](https://docs.n8n.io/integrations/community-nodes/)
 - [Sweeppea Platform](https://sweeppea.com)
-- [Sweeppea API Documentation](https://api.sweeppea.com/docs)
+- [Sweeppea API Documentation](https://apidocs.sweeppea.com/index.html)
 
 ## Version history
 
@@ -144,7 +144,7 @@ An advanced workflow that automatically adapts to any sweepstake configuration:
 **Initial Release**
 
 - Dynamic field loading based on sweepstake configuration (API v3)
-- Support for Get Schema operation
+- Support for Get Form Fields operation
 - Support for Create Participant operation
 - Multi-environment support (production, development)
 - Automatic field validation
