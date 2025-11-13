@@ -25,7 +25,7 @@ export class SweeppeaApi implements ICredentialType {
 
 	name        = 'sweeppeaApi';
 	displayName = 'Sweeppea API';
-	documentationUrl = 'https://apidocs.sweeppea.com/index.html';
+	documentationUrl = 'https://apidocs.sweeppea.com';
 
 	properties: INodeProperties[] = [
 		{

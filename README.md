@@ -135,7 +135,7 @@ An advanced workflow that automatically adapts to any sweepstake configuration:
 
 - [n8n community nodes documentation](https://docs.n8n.io/integrations/community-nodes/)
 - [Sweeppea Platform](https://sweeppea.com)
-- [Sweeppea API Documentation](https://apidocs.sweeppea.com/index.html)
+- [Sweeppea API Documentation](https://apidocs.sweeppea.com)
 
 ## Version history
 
