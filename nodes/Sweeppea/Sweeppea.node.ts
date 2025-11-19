@@ -6,7 +6,7 @@
 	                    |_|  |_|
 
 	Platform  : Sweeppea N8N Integration
-	Version   : 0.1.0
+	Version   : 1.0
 	Path      : /nodes/Sweeppea/Sweeppea.node.ts
 
 	(c) Sweeppea, all rights reserved.
@@ -21,10 +21,6 @@ import {
 	NodeOperationError,
 } from 'n8n-workflow';
 
-/*
- * Sweeppea Node Implementation
- * Allows creating participants in sweepstakes through N8N workflows
- */
 export class Sweeppea implements INodeType {
 
 	description: INodeTypeDescription = {
@@ -34,7 +30,7 @@ export class Sweeppea implements INodeType {
 		group       : ['transform'],
 		version     : 1,
 		subtitle    : '={{$parameter["operation"] + ": " + $parameter["resource"]}}',
-		description : 'Interact with Sweeppea API to manage sweepstakes and participants',
+		description : 'Interact with Sweeppea API',
 		defaults    : {
 			name: 'Sweeppea',
 		},
@@ -47,7 +43,7 @@ export class Sweeppea implements INodeType {
 			},
 		],
 		requestDefaults: {
-			baseURL : '={{$credentials.environment === "production" ? "https://api.sweeppea.com" : $credentials.customApiUrl}}',
+			baseURL : '={{$credentials.environment === "production" ? "https://api.sweeppea.com" : $credentials.environment === "staging" ? "https://staging-api.sweeppea.com" : $credentials.customApiUrl}}',
 			headers : {
 				Accept         : 'application/json',
 				'Content-Type' : 'application/json',
@@ -79,10 +75,10 @@ export class Sweeppea implements INodeType {
 				},
 				options: [
 					{
-						name        : 'Get Form Fields',
-						value       : 'getFormFields',
-						description : 'Get the entry form fields for a sweepstake',
-						action      : 'Get sweepstake form fields',
+						name        : 'Get Schema',
+						value       : 'getSchema',
+						description : 'Get the required fields for a sweepstake (useful for dynamic forms/chatbots)',
+						action      : 'Get sweepstake schema',
 					},
 					{
 						name        : 'Create',
@@ -104,12 +100,12 @@ export class Sweeppea implements INodeType {
 				displayOptions : {
 					show: {
 						resource  : ['participant'],
-						operation : ["getFormFields", "create"],
+						operation : ["getSchema", "create"],
 					},
 				},
 				default     : '',
-				placeholder : 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx',
-				description : 'The unique identifier (UUID) for your sweepstake campaign',
+				placeholder : '83d12d10-7a6d-4f99-a546-5a1c3cc267f9',
+				description : 'The sweepstakes UUID token',
 			},
 			{
 				displayName    : 'Additional Fields',
@@ -120,7 +116,7 @@ export class Sweeppea implements INodeType {
 				displayOptions : {
 					show: {
 						resource  : ['participant'],
-						operation : ['getFormFields', 'create'],
+						operation : ['getSchema', 'create'],
 					},
 				},
 				options: [
@@ -136,10 +132,6 @@ export class Sweeppea implements INodeType {
 		],
 	};
 
-	/*
-	 * Execute Node Logic
-	 * Processes each item in the workflow and creates participants
-	 */
 	async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
 
 		const items      = this.getInputData();
@@ -150,57 +142,33 @@ export class Sweeppea implements INodeType {
 		/* Get Credentials */
 		const credentials = await this.getCredentials('sweeppeaApi');
 		const environment = credentials.environment as string;
-		const isProduction = environment === 'production';
 
-		let baseUrl: string;
+		let baseUrl  : string;
+		let apiToken : string;
 
-		if (isProduction) {
+		if (environment === 'production') {
 
-			baseUrl = 'https://d2e1p15gger19t.cloudfront.net/prod/api-v2';
+			baseUrl  = 'https://api-v3.sweeppea.com';
+			apiToken = credentials.apiToken as string;
 
 		} else {
 
-			baseUrl = credentials.customApiUrl as string;
+			baseUrl  = (credentials.customApiUrl as string) || 'http://localhost:3002';
+			apiToken = credentials.apiKey as string;
 		}
 
 		if (resource === 'participant') {
 
-		
-		if (operation === 'getFormFields') {
+			if (operation === 'getSchema') {
 
-			/* Get Form Fields Operation - Fetch Entry Page Fields */
-			for (let i = 0; i < items.length; i++) {
+				/* Get Schema Operation - Fetch Entry Page Fields */
+				for (let i = 0; i < items.length; i++) {
 
-				try {
+					try {
 
-					const sweepstakesToken = this.getNodeParameter('sweepstakesToken', i) as string;
+						const sweepstakesToken = this.getNodeParameter('sweepstakesToken', i) as string;
 
-					let schemaResponse: any;
-
-					if (isProduction) {
-
-						/* Production: API v3 with Bearer Auth */
-						const apiToken = credentials.apiToken as string;
-
-						schemaResponse = await this.helpers.httpRequest({
-							method  : 'POST',
-							url     : `https://api-v3.sweeppea.com/entrypage/fields`,
-							body    : {
-								SweepstakesToken: sweepstakesToken,
-							},
-							json    : true,
-							headers : {
-								'Content-Type'  : 'application/json',
-								'Authorization' : `Bearer ${apiToken}`,
-							},
-						});
-
-					} else {
-
-						/* Development: Mock Server */
-						const apiToken = credentials.apiKey as string;
-
-						schemaResponse = await this.helpers.httpRequest({
+						const schemaResponse = await this.helpers.request({
 							method  : 'POST',
 							url     : `${baseUrl}/entrypage/fields`,
 							body    : {
@@ -212,138 +180,14 @@ export class Sweeppea implements INodeType {
 								'Authorization' : `Bearer ${apiToken}`,
 							},
 						});
-					}
-
-					if (!schemaResponse.Response) {
-
-						throw new NodeOperationError(
-							this.getNode(),
-							`Failed to fetch sweepstake form fields: ${schemaResponse.Message || 'Unknown error'}`,
-							{ itemIndex: i },
-						);
-					}
-
-					/* Return Form Fields Data */
-					returnData.push({
-						json       : schemaResponse as IDataObject,
-						pairedItem : { item: i },
-					});
-
-				} catch (error) {
-
-					/* Handle API-Specific Errors */
-					if (error.httpCode === 404) {
-
-						throw new NodeOperationError(
-							this.getNode(),
-							`Sweepstake not found. Please verify the Sweepstakes Token is correct.`,
-							{ itemIndex: i },
-						);
-					}
-
-					/* If Continue On Fail Is Enabled, Add Error To Result */
-					if (this.continueOnFail()) {
 
 						returnData.push({
-							json: {
-								error     : error.message,
-								itemIndex : i,
-							},
-							pairedItem: { item: i },
-						});
-
-						continue;
-					}
-
-					/* Re-Throw Error If Cannot Handle */
-					throw error;
-				}
-			}
-
-		} else if (operation === 'create') {
-
-				/* Process Each Item In The Workflow */
-				for (let i = 0; i < items.length; i++) {
-
-					try {
-
-						const inputData    = items[i].json;
-
-						let createResponse: any;
-
-						if (isProduction) {
-
-							/* Production Environment - Use Real Sweeppea API Format */
-							const sweepstakesToken = this.getNodeParameter('sweepstakesToken', i) as string;
-							const apiToken         = credentials.apiToken as string;
-
-							/* Build Request Body For Real API */
-							const requestBody = {
-								lang             : 'en',
-								source           : 'n8n-integration',
-								apiToken         : apiToken,
-								sweepstakesToken : sweepstakesToken,
-								entryPageFields  : {
-									KeyPhoneNumber : inputData.KeyPhoneNumber || '',
-									KeyEmail       : inputData.KeyEmail || '',
-									BonusEntries   : String(inputData.BonusEntries || 0),
-									Fields         : inputData.Fields || {},
-								},
-							};
-
-
-							/* Call Real Sweeppea API (No Auth Header Needed - Token In Body) */
-							createResponse = await this.helpers.httpRequest({
-								method  : 'POST',
-								url     : `${baseUrl}/injectParticipant`,
-								body    : requestBody,
-								json    : true,
-								headers : {
-									'Content-Type': 'application/json',
-								},
-							});
-
-				} else {
-
-					/* Development Environment - Use Same Format As Production */
-					const sweepstakesToken = this.getNodeParameter('sweepstakesToken', i) as string;
-					const apiToken         = credentials.apiKey as string;
-
-					/* Build Request Body (Same Format As Production API) */
-					const requestBody = {
-						lang             : 'en',
-						source           : 'n8n-integration',
-						apiToken         : apiToken,
-						sweepstakesToken : sweepstakesToken,
-						entryPageFields  : {
-							KeyPhoneNumber : inputData.KeyPhoneNumber || '',
-							KeyEmail       : inputData.KeyEmail || '',
-							BonusEntries   : String(inputData.BonusEntries || 0),
-							Fields         : inputData.Fields || {},
-						},
-					};
-
-					/* Call Mock Sweeppea API (No Auth Header Needed - Token In Body) */
-					createResponse = await this.helpers.httpRequest({
-						method  : 'POST',
-						url     : `${baseUrl}/injectParticipant`,
-						body    : requestBody,
-						json    : true,
-						headers : {
-							'Content-Type': 'application/json',
-						},
-					});
-				}
-
-						/* Add Result To Return Data */
-						returnData.push({
-							json       : createResponse as IDataObject,
+							json       : schemaResponse as IDataObject,
 							pairedItem : { item: i },
 						});
 
 					} catch (error) {
 
-						/* Handle API-Specific Errors */
 						if (error.httpCode === 404) {
 
 							throw new NodeOperationError(
@@ -351,45 +195,108 @@ export class Sweeppea implements INodeType {
 								`Sweepstake not found. Please verify the Sweepstakes Token is correct.`,
 								{ itemIndex: i },
 							);
+						}
 
-						} else if (error.httpCode === 409) {
+						if (this.continueOnFail()) {
 
-							const errorMessage = error.response?.body?.message || 'A participant with this email already exists for this sweepstake';
+							const errorBody = error.response?.body || {};
+
+							returnData.push({
+								json       : Object.keys(errorBody).length > 0 ? errorBody : {
+									Response  : false,
+									Message   : error.message,
+									itemIndex : i,
+								},
+								pairedItem : { item: i },
+							});
+
+							continue;
+						}
+
+						throw error;
+					}
+				}
+
+			} else if (operation === 'create') {
+
+				/* Create Participant Operation */
+				for (let i = 0; i < items.length; i++) {
+
+					try {
+
+						const inputData        = items[i].json;
+						const sweepstakesToken = this.getNodeParameter('sweepstakesToken', i) as string;
+
+						/* Build Request Body For API v3 */
+						const requestBody = {
+							lang             : inputData.lang || 'EN',
+							source           : inputData.source || 'n8n-integration',
+							sweepstakesToken : sweepstakesToken,
+							entryPageFields  : {
+								KeyPhoneNumber : inputData.KeyPhoneNumber || '',
+								KeyEmail       : inputData.KeyEmail || '',
+								BonusEntries   : inputData.BonusEntries || 0,
+								Fields         : inputData.Fields || {},
+							},
+						};
+
+						/* Call API v3 With Bearer Auth */
+						const createResponse = await this.helpers.request({
+							method  : 'POST',
+							url     : `${baseUrl}/participants/add`,
+							body    : requestBody,
+							json    : true,
+							headers : {
+								'Content-Type'  : 'application/json',
+								'Authorization' : `Bearer ${apiToken}`,
+							},
+						});
+
+						returnData.push({
+							json       : createResponse as IDataObject,
+							pairedItem : { item: i },
+						});
+
+					} catch (error) {
+
+						/* If Continue On Fail Is Enabled, Return Error As Data */
+						if (this.continueOnFail()) {
+
+							const errorBody = error.response?.body || {};
+
+							returnData.push({
+								json       : Object.keys(errorBody).length > 0 ? errorBody : {
+									Response  : false,
+									Message   : error.message,
+									itemIndex : i,
+								},
+								pairedItem : { item: i },
+							});
+
+							continue;
+						}
+
+						/* Otherwise, Throw Detailed Error */
+						if (error.httpCode === 404 || error.statusCode === 404) {
+
+							throw new NodeOperationError(
+								this.getNode(),
+								`Sweepstake not found. Please verify the Sweepstakes Token is correct.`,
+								{ itemIndex: i },
+							);
+
+						} else if (error.httpCode === 400 || error.statusCode === 400) {
+
+							const apiError     = error.response?.body || {};
+							const errorMessage = apiError.Message || apiError.message || 'Validation failed';
 
 							throw new NodeOperationError(
 								this.getNode(),
 								errorMessage,
 								{ itemIndex: i },
 							);
-
-						} else if (error.httpCode === 400) {
-
-							const errorMessage = error.response?.body?.message || 'Validation failed';
-							const errors       = error.response?.body?.errors || [];
-							const errorDetails = errors.length > 0 ? `\n- ${errors.join('\n- ')}` : '';
-
-							throw new NodeOperationError(
-								this.getNode(),
-								`${errorMessage}${errorDetails}`,
-								{ itemIndex: i },
-							);
 						}
 
-						/* If Continue On Fail Is Enabled, Add Error To Result */
-						if (this.continueOnFail()) {
-
-							returnData.push({
-								json: {
-									error     : error.message,
-									itemIndex : i,
-								},
-								pairedItem: { item: i },
-							});
-
-							continue;
-						}
-
-						/* Re-Throw Error If Cannot Handle */
 						throw error;
 					}
 				}

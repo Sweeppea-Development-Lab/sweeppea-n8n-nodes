@@ -42,7 +42,7 @@ export class SweeppeaApi implements ICredentialType {
 					value : 'development',
 				},
 			],
-			default     : 'development',
+			default     : 'production',
 			description : 'The environment to connect to',
 		},
 		{
