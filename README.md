@@ -36,8 +36,8 @@ You'll need to configure your Sweeppea API credentials:
 
 ### How to get your API credentials
 
-1. Log in to your Sweeppea account
-2. Navigate to Settings → API Credentials
+1. Log in to your [Sweeppea Dashboard](https://app.sweeppea.com/api-dashboard)
+2. Navigate to the **API Keys** tab
 3. Generate or copy your API token
 4. Use this token in the n8n credential configuration
 
