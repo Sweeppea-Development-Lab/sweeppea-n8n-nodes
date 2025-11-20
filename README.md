@@ -99,6 +99,8 @@ The node expects data in this format:
 2. Go to **Settings** tab (not Parameters)
 3. Under **On Error**, change from "Stop Workflow" to **Continue**
 
+![Error Handling Configuration](examples/sweeppea-on-error-choose-continue.png)
+
 **This configuration is MANDATORY** for the node to work correctly. Without it, duplicate participants or validation errors will stop your entire workflow instead of being handled gracefully.
 
 **Why is this required?**

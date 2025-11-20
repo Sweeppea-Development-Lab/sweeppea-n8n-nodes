@@ -112,14 +112,14 @@
     },
     {
       "parameters": {
-        "message": "={{\n  $json.Message?.includes('already exists') || $json.Message?.includes('Duplicated')\n    ? 'Thank you for your interest! Unfortunately, participants can only enter once per sweepstake. We appreciate your enthusiasm! 🎉'\n    : 'Thank you for participating! Your entry has been received. 🎊'\n}}",
+        "message": "={{\n  $json.Response === false\n    ? ($json.Message?.includes('Duplicated entries not allowed')\n        ? 'Thank you for your interest! Unfortunately, participants can only enter once per sweepstake. We appreciate your enthusiasm! 🎉'\n        : `Sorry, there was an error: ${$json.Message}`)\n    : 'Thank you for participating! Your entry has been received. 🎊'\n}}",
         "waitUserReply": false,
         "options": {}
       },
       "type": "@n8n/n8n-nodes-langchain.chat",
       "typeVersion": 1,
       "position": [
-        1136,
+        1184,
         -64
       ],
       "id": "f31e71ba-8e67-4df5-97bc-9a4f91a20199",
@@ -142,36 +142,37 @@
     },
     {
       "parameters": {
-        "sweepstakesToken": "965a7edb-1f46-4116-a394-9c8a63769284",
-        "additionalFields": {}
-      },
-      "type": "CUSTOM.sweeppea",
-      "typeVersion": 1,
-      "position": [
-        896,
-        -64
-      ],
-      "id": "f6eb9cf4-f221-4cc1-a215-8dd87708e004",
-      "name": "Create a participant",
-      "credentials": {
-        "sweeppeaApi": {
-          "id": "HNPlWnNHyCgxGfGT",
-          "name": "Sweeppea Prod 2"
-        }
-      }
-    },
-    {
-      "parameters": {
         "jsCode": "/* Extract AI Output */\nlet aiOutput = $input.first().json.output;\n\n/* Clean Markdown */\naiOutput = aiOutput.replace(/```json\\s*/g, '').replace(/```/g, '').trim();\n\n/* Parse JSON */\nconst parsed = JSON.parse(aiOutput);\n\n/* Check Action */\nif (parsed.action !== 'create_participant') {\n\treturn { json: {} };\n}\n\n/* Remove Action */\nconst { action, ...fields } = parsed;\n\n/* Return API Format */\nreturn {\n\tjson: {\n\t\tKeyEmail       : fields.Email || '',\n\t\tKeyPhoneNumber : fields.Mobile_Number || '',\n\t\tBonusEntries   : 0,\n\t\tFields         : {\n\t\t\tFirst_Name    : fields.First_Name || '',\n\t\t\tLast_Name     : fields.Last_Name || '',\n\t\t\tEmail         : fields.Email || '',\n\t\t\tMobile_Number : fields.Mobile_Number || ''\n\t\t}\n\t}\n};"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        688,
+        736,
         -64
       ],
       "id": "462e5c3f-a285-4e2e-941b-d2449dfa1775",
       "name": "Transform AI Response to API Format"
+    },
+    {
+      "parameters": {
+        "sweepstakesToken": "965a7edb-1f46-4116-a394-9c8a63769284",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-sweeppea.sweeppea",
+      "typeVersion": 1,
+      "position": [
+        960,
+        -64
+      ],
+      "id": "982d644c-c4bc-40c8-b33b-26086d31e07a",
+      "name": "Create a participant",
+      "credentials": {
+        "sweeppeaApi": {
+          "id": "x5aanJN41DK3H75j",
+          "name": "Sweeppea V3"
+        }
+      },
+      "onError": "continueRegularOutput"
     }
   ],
   "pinData": {},
@@ -238,17 +239,6 @@
         ]
       ]
     },
-    "Create a participant": {
-      "main": [
-        [
-          {
-            "node": "Respond to Chat",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Transform AI Response to API Format": {
       "main": [
         [
@@ -259,13 +249,24 @@
           }
         ]
       ]
+    },
+    "Create a participant": {
+      "main": [
+        [
+          {
+            "node": "Respond to Chat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
-  "active": false,
+  "active": true,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "4ba0a693-a5df-496b-906d-1eb7d6562471",
+  "versionId": "d127bed4-fc94-4c30-97c8-ff4fe075d759",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "97cc809dc15184aed10e7202e73fcbe8e8f615b1384fd3e68d3888b8c799fcc0"
