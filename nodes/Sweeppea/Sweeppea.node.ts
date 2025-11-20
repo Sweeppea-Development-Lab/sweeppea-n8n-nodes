@@ -43,7 +43,7 @@ export class Sweeppea implements INodeType {
 			},
 		],
 		requestDefaults: {
-			baseURL : '={{$credentials.environment === "production" ? "https://api.sweeppea.com" : $credentials.environment === "staging" ? "https://staging-api.sweeppea.com" : $credentials.customApiUrl}}',
+			baseURL : '={{$credentials.environment === "production" ? "https://api-v3.sweeppea.com": $credentials.customApiUrl}}',
 			headers : {
 				Accept         : 'application/json',
 				'Content-Type' : 'application/json',

@@ -31,7 +31,7 @@ You'll need to configure your Sweeppea API credentials:
 
 1. **API Token/Key** - Your Sweeppea API authentication token
 2. **Environment** - Select your target environment:
-   - Production (https://api.sweeppea.com)
+   - Production (https://api-v3.sweeppea.com)
    - Development (for local testing with custom API URL)
 
 ### How to get your API credentials
