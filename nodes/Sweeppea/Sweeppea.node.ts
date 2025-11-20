@@ -75,10 +75,10 @@ export class Sweeppea implements INodeType {
 				},
 				options: [
 					{
-						name        : 'Get Schema',
-						value       : 'getSchema',
-						description : 'Get the required fields for a sweepstake (useful for dynamic forms/chatbots)',
-						action      : 'Get sweepstake schema',
+						name        : 'Get Form Fields',
+						value       : 'getFormFields',
+						description : 'Get the entry form fields for a sweepstake',
+						action      : 'Get sweepstake form fields',
 					},
 					{
 						name        : 'Create',
@@ -100,7 +100,7 @@ export class Sweeppea implements INodeType {
 				displayOptions : {
 					show: {
 						resource  : ['participant'],
-						operation : ["getSchema", "create"],
+						operation : ["getFormFields", "create"],
 					},
 				},
 				default     : '',
@@ -116,7 +116,7 @@ export class Sweeppea implements INodeType {
 				displayOptions : {
 					show: {
 						resource  : ['participant'],
-						operation : ['getSchema', 'create'],
+						operation : ['getFormFields', 'create'],
 					},
 				},
 				options: [
@@ -159,9 +159,9 @@ export class Sweeppea implements INodeType {
 
 		if (resource === 'participant') {
 
-			if (operation === 'getSchema') {
+			if (operation === 'getFormFields') {
 
-				/* Get Schema Operation - Fetch Entry Page Fields */
+				/* Get Form Fields Operation - Fetch Entry Page Fields */
 				for (let i = 0; i < items.length; i++) {
 
 					try {
