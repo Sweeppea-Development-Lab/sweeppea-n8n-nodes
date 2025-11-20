@@ -30,6 +30,7 @@ let sweeppeaJs = sweeppeaTs
 	.replace(/:\s*string/g, '')
 	.replace(/as\s+string/g, '')
 	.replace(/as\s+IDataObject/g, '')
+	.replace(/as\s+const/g, '')
 	.replace(/new NodeOperationError\(/g, 'new n8n_workflow_1.NodeOperationError(');
 
 sweeppeaJs = '"use strict";\nObject.defineProperty(exports, "__esModule", { value: true });\nexports.Sweeppea = void 0;\nconst n8n_workflow_1 = require("n8n-workflow");\n' + sweeppeaJs.replace(/^\/\*/, '/*') + '\nexports.Sweeppea = Sweeppea;\n';

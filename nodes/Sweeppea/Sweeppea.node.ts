@@ -31,11 +31,11 @@ export class Sweeppea implements INodeType {
 		version     : 1,
 		subtitle    : '={{$parameter["operation"] + ": " + $parameter["resource"]}}',
 		description : 'Interact with Sweeppea API',
-		defaults    : {
-			name: 'Sweeppea',
+		defaults       : {
+			name : 'Sweeppea',
 		},
-		inputs      : ['main'],
-		outputs     : ['main'],
+		inputs         : ['main'],
+		outputs        : ['main'],
 		credentials : [
 			{
 				name     : 'sweeppeaApi',

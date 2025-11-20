@@ -91,15 +91,20 @@ The node expects data in this format:
 }
 ```
 
-### Important: Error Handling Configuration
+### ⚠️ IMPORTANT: Mandatory Error Handling Configuration
 
-When using the **Create Participant** operation, it's recommended to enable **Continue On Fail** in the node settings:
+**BEFORE USING THIS NODE**, you **MUST** configure error handling:
 
-1. Click on the **Create Participant** node
-2. Go to **Settings** tab
-3. Under **On Error**, select **Continue**
+1. Click on the Sweeppea node
+2. Go to **Settings** tab (not Parameters)
+3. Under **On Error**, change from "Stop Workflow" to **Continue**
 
-This allows your workflow to handle errors gracefully (such as duplicate participants or validation errors) and process the error response in subsequent nodes instead of stopping the entire workflow.
+**This configuration is MANDATORY** for the node to work correctly. Without it, duplicate participants or validation errors will stop your entire workflow instead of being handled gracefully.
+
+**Why is this required?**
+- The node is designed to pass error responses (like duplicate entries) as data to the next node
+- This allows you to handle errors in your workflow logic (show messages, log, retry, etc.)
+- Without "Continue" enabled, the workflow will crash on the first error
 
 ## Example Workflows
 
