@@ -6,13 +6,13 @@ Community node for integrating Sweeppea sweepstakes platform with n8n workflows.
 
 [n8n](https://n8n.io/) is a [fair-code licensed](https://docs.n8n.io/reference/license/) workflow automation platform.
 
-[Installation](#installation)
-[Operations](#operations)
-[Credentials](#credentials)
-[Compatibility](#compatibility)
-[Usage](#usage)
-[Resources](#resources)
-[Version history](#version-history)
+- [Installation](#installation)
+- [Operations](#operations)
+- [Credentials](#credentials)
+- [Compatibility](#compatibility)
+- [Usage](#usage)
+- [Resources](#resources)
+- [Version history](#version-history)
 
 ## Installation
 
@@ -154,7 +154,7 @@ An advanced workflow that automatically adapts to any sweepstake configuration:
 
 ## Version history
 
-### 0.1.0 (2025-01-11)
+### 0.1.0 (2025-11-19)
 
 **Initial Release**
 
@@ -174,7 +174,7 @@ An advanced workflow that automatically adapts to any sweepstake configuration:
 
 ## License
 
-[MIT](LICENSE.md)
+[MIT](LICENSE)
 
 ---
 
