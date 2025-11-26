@@ -1,0 +1,276 @@
+{
+  "name": "Sweeppea Create Participant",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.chatInput }}",
+        "options": {
+          "systemMessage": "You are a friendly assistant helping users register for a sweepstake.\n\nWhen you have ALL the required data from the user, respond ONLY with a JSON object.\n\nRequired fields:\n- First_Name\n- Last_Name\n- Email\n- Mobile_Number (10 digits, US format)\n\nWhen you have ALL the data, respond with this EXACT JSON format:\n\n{\n  \"action\": \"create_participant\",\n  \"First_Name\": \"John\",\n  \"Last_Name\": \"Doe\",\n  \"Email\": \"user@example.com\",\n  \"Mobile_Number\": \"1234567890\"\n}\n\nImportant:\n- Ask for ONE field at a time in a conversational way\n- Be friendly and engaging\n- Validate email format\n- Phone must be 10 digits\n- When you have ALL the data, respond ONLY with the JSON (no additional text)"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        160,
+        -48
+      ],
+      "id": "ae953344-9adb-4713-a996-f7a4fe11cd05",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        48,
+        160
+      ],
+      "id": "eb26e032-8eee-4934-b9fe-49444e45ab11",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "eVduVpqXCnvdxUWf",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.output }}",
+                    "rightValue": "create_participant",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    },
+                    "id": "f35b4e2a-6367-41c6-ac39-d864a45b4cd9"
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [
+        480,
+        -48
+      ],
+      "id": "46ac6d2e-acb6-4f3b-b2c5-996be766dba4",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.sessionId }}",
+        "contextWindowLength": 10
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        256,
+        176
+      ],
+      "id": "df67119b-8126-4c24-8237-162d3480bf2e",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "public": true,
+        "options": {
+          "responseMode": "responseNodes"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -48,
+        -48
+      ],
+      "id": "1f5a4a67-f44b-4622-b197-5522cfb9b65a",
+      "name": "When chat message received",
+      "webhookId": "583f5c72-6859-4d8b-b858-9532dbfa1d45"
+    },
+    {
+      "parameters": {
+        "message": "={{\n  $json.Response === false\n    ? ($json.Message?.includes('Duplicated entries not allowed')\n        ? 'Thank you for your interest! Unfortunately, participants can only enter once per sweepstake. We appreciate your enthusiasm! 🎉'\n        : `Sorry, there was an error: ${$json.Message}`)\n    : 'Thank you for participating! Your entry has been received. 🎊'\n}}",
+        "waitUserReply": false,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chat",
+      "typeVersion": 1,
+      "position": [
+        1184,
+        -64
+      ],
+      "id": "f31e71ba-8e67-4df5-97bc-9a4f91a20199",
+      "name": "Respond to Chat"
+    },
+    {
+      "parameters": {
+        "message": "={{ $('AI Agent').item.json.output }}",
+        "waitUserReply": false,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chat",
+      "typeVersion": 1,
+      "position": [
+        752,
+        144
+      ],
+      "id": "aa305c97-3368-482d-a7cc-39e46b1ef078",
+      "name": "Respond to Chat1"
+    },
+    {
+      "parameters": {
+        "jsCode": "/* Extract AI Output */\nlet aiOutput = $input.first().json.output;\n\n/* Clean Markdown */\naiOutput = aiOutput.replace(/```json\\s*/g, '').replace(/```/g, '').trim();\n\n/* Parse JSON */\nconst parsed = JSON.parse(aiOutput);\n\n/* Check Action */\nif (parsed.action !== 'create_participant') {\n\treturn { json: {} };\n}\n\n/* Remove Action */\nconst { action, ...fields } = parsed;\n\n/* Return API Format */\nreturn {\n\tjson: {\n\t\tKeyEmail       : fields.Email || '',\n\t\tKeyPhoneNumber : fields.Mobile_Number || '',\n\t\tBonusEntries   : 0,\n\t\tFields         : {\n\t\t\tFirst_Name    : fields.First_Name || '',\n\t\t\tLast_Name     : fields.Last_Name || '',\n\t\t\tEmail         : fields.Email || '',\n\t\t\tMobile_Number : fields.Mobile_Number || ''\n\t\t}\n\t}\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        736,
+        -64
+      ],
+      "id": "462e5c3f-a285-4e2e-941b-d2449dfa1775",
+      "name": "Transform AI Response to API Format"
+    },
+    {
+      "parameters": {
+        "sweepstakesToken": "965a7edb-1f46-4116-a394-9c8a63769284",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-sweeppea.sweeppea",
+      "typeVersion": 1,
+      "position": [
+        960,
+        -64
+      ],
+      "id": "982d644c-c4bc-40c8-b33b-26086d31e07a",
+      "name": "Create a participant",
+      "credentials": {
+        "sweeppeaApi": {
+          "id": "x5aanJN41DK3H75j",
+          "name": "Sweeppea V3"
+        }
+      },
+      "onError": "continueRegularOutput"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Transform AI Response to API Format",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Chat1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transform AI Response to API Format": {
+      "main": [
+        [
+          {
+            "node": "Create a participant",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a participant": {
+      "main": [
+        [
+          {
+            "node": "Respond to Chat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "d127bed4-fc94-4c30-97c8-ff4fe075d759",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "97cc809dc15184aed10e7202e73fcbe8e8f615b1384fd3e68d3888b8c799fcc0"
+  },
+  "id": "QjmpuDTpCDXXGqvF",
+  "tags": []
+}

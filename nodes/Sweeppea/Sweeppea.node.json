@@ -1,0 +1,52 @@
+{
+	"node": "n8n-nodes-sweeppea.sweeppea",
+	"nodeVersion": "0.1.0",
+	"codexVersion": "1.0",
+	"categories": [
+		"Marketing & Content",
+		"Sales & CRM",
+		"Data & Storage"
+	],
+	"resources": {
+		"credentialDocumentation": [
+			{
+				"url": "https://github.com/Sweeppea-Development-Lab/sweeppea-n8n-nodes#credentials"
+			}
+		],
+		"primaryDocumentation": [
+			{
+				"url": "https://github.com/Sweeppea-Development-Lab/sweeppea-n8n-nodes#readme"
+			}
+		],
+		"generic": [
+			{
+				"label": "GitHub Repository",
+				"url": "https://github.com/Sweeppea-Development-Lab/sweeppea-n8n-nodes"
+			},
+			{
+				"label": "API Documentation",
+				"url": "https://apidocs.sweeppea.com/"
+			},
+			{
+				"label": "Getting Started Guide",
+				"url": "https://github.com/Sweeppea-Development-Lab/sweeppea-n8n-nodes#readme"
+			},
+			{
+				"label": "Integration Examples",
+				"url": "https://github.com/Sweeppea-Development-Lab/sweeppea-n8n-nodes/tree/main/examples"
+			}
+		]
+	},
+	"alias": [
+		"sweepstakes",
+		"giveaway",
+		"lottery",
+		"raffle",
+		"contest",
+		"prize",
+		"promotional",
+		"campaign",
+		"participant",
+		"registration"
+	]
+}
