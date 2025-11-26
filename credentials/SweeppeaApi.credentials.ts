@@ -55,7 +55,7 @@ export class SweeppeaApi implements ICredentialType {
 			default       : '',
 			required      : true,
 			description   : 'Your Sweeppea API token (UUID format)',
-			placeholder   : 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx',
+			placeholder   : 'xxxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx',
 			displayOptions: {
 				show: {
 					environment: ['production'],

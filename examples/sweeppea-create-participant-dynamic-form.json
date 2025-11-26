@@ -1,332 +1,334 @@
 {
-  "name": "Sweeppea Create Participant Dynamic Form",
-  "nodes": [
-    {
-      "parameters": {
-        "jsCode": "/* Convert API v3 Response To Dynamic System Prompt */\n\nconst responseData = $input.first().json;\nconst data         = responseData.Data;\n\nif (!data || !data.FormFields) {\n\tthrow new Error('Response data invalid or empty');\n}\n\n/* Create Slug Function: \"First Name\" → \"First_Name\", keep punctuation */\nconst toSlug = (name) => {\n\treturn name\n\t\t.trim()\n\t\t.replace(/\\s+/g, '_'); // Replace spaces with underscores\n};\n\n/* Create Field Mapping: slug -> field data */\nconst fieldMapping = {};\ndata.FormFields.forEach(f => {\n\tconst slug = toSlug(f.Name);\n\tfieldMapping[slug] = {\n\t\tid          : f.Id,\n\t\tname        : f.Name,\n\t\ttype        : f.Type,\n\t\trequired    : f.Required,\n\t\tplaceholder : f.Placeholder,\n\t\toptions     : f.Options || []\n\t};\n});\n\n/* Find Email And Phone Fields */\nconst emailField = data.FormFields.find(f => f.Type === 'email');\nconst phoneField = data.FormFields.find(f => f.Type === 'usphonenumber');\n\n/* Separate Required And Optional Fields */\nconst requiredFields = data.FormFields.filter(f => f.Required);\nconst optionalFields = data.FormFields.filter(f => !f.Required);\n\n/* Build Required Fields List */\nconst requiredList = requiredFields.map(f => {\n\tconst placeholder = f.Placeholder && f.Placeholder !== '' ? ` - Example: ${f.Placeholder}` : '';\n\tconst options     = f.Options && f.Options.length > 0 \n\t\t? ` - Options: ${f.Options.map(o => `${o.Id}: ${o.Name}`).join(', ')}`\n\t\t: '';\n\treturn `- ${f.Name}${placeholder}${options}`;\n}).join('\\n');\n\n/* Build Optional Fields List */\nconst optionalList = optionalFields.length > 0 \n\t? '\\n\\nOptional fields:\\n' + optionalFields.map(f => {\n\t\tconst placeholder = f.Placeholder && f.Placeholder !== '' ? ` - Example: ${f.Placeholder}` : '';\n\t\tconst options     = f.Options && f.Options.length > 0 \n\t\t\t? ` - Options: ${f.Options.map(o => `${o.Id}: ${o.Name}`).join(', ')}`\n\t\t\t: '';\n\t\treturn `- ${f.Name}${placeholder}${options}`;\n\t}).join('\\n')\n\t: '';\n\n/* Build JSON Example */\nconst jsonExample = {};\ndata.FormFields.forEach(f => {\n\tconst slug = toSlug(f.Name);\n\tif (f.Type === 'list' && f.Options.length > 0) {\n\t\tjsonExample[slug] = String(f.Options[0].Id);\n\t} else if (f.Type === 'email') {\n\t\tjsonExample[slug] = 'user@example.com';\n\t} else if (f.Type === 'usphonenumber') {\n\t\tjsonExample[slug] = '1234567890';\n\t} else if (f.Type === 'birthdate') {\n\t\tjsonExample[slug] = 'MM/DD/YYYY';\n\t} else if (f.Type === 'number') {\n\t\tjsonExample[slug] = '0';\n\t} else {\n\t\tjsonExample[slug] = '<value>';\n\t}\n});\n\n/* Dynamic System Prompt */\nconst systemPrompt = `You are a friendly assistant helping users register for a sweepstake.\n\nWhen you have ALL the required data from the user, respond ONLY with a JSON object containing the user's information.\n\nRequired fields:\n${requiredList}${optionalList}\n\nWhen you have ALL the required data, respond with this EXACT JSON format (use the exact field names with underscores):\n\n{\n  \"action\": \"create_participant\",\n${Object.entries(jsonExample).map(([key, val]) => `  \"${key}\": \"${val}\"`).join(',\\n')}\n}\n\nImportant:\n- Ask for ONE field at a time in a conversational way\n- Be friendly and engaging\n- Validate data formats before proceeding\n- When you have ALL the required data, respond ONLY with the JSON (no additional text)\n- Use EXACTLY the field names shown above (with underscores replacing spaces)\n- For list/select fields, use the option ID number, not the name\n- DO NOT use placeholder text, use actual user data\n- DO NOT include any other fields in the JSON`;\n\n/* Return System Prompt And Data */\nreturn {\n\tjson: {\n\t\tsystemPrompt       : systemPrompt,\n\t\tfieldMapping       : fieldMapping,\n\t\temailFieldSlug     : emailField ? toSlug(emailField.Name) : 'Email',\n\t\tphoneFieldSlug     : phoneField ? toSlug(phoneField.Name) : 'Mobile_Number',\n\t\tsweepstakesToken   : data.SweepstakesToken,\n\t\tentryPageToken     : data.EntryPageToken,\n\t\tchatInput          : $('When chat message received').item.json.chatInput,\n\t\tsessionId          : $('When chat message received').item.json.sessionId\n\t}\n};"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        224,
-        400
-      ],
-      "id": "719ca6a8-a6d1-436c-ad79-a9eaa104ea1a",
-      "name": "Build Dynamic Prompt"
-    },
-    {
-      "parameters": {
-        "promptType": "define",
-        "text": "={{ $json.chatInput }}",
-        "options": {
-          "systemMessage": "={{ $json.systemPrompt }}"
-        }
-      },
-      "type": "@n8n/n8n-nodes-langchain.agent",
-      "typeVersion": 2.2,
-      "position": [
-        464,
-        400
-      ],
-      "id": "bab6dfb9-aa7a-44c8-993a-a1c82689cdb0",
-      "name": "AI Agent1"
-    },
-    {
-      "parameters": {
-        "options": {}
-      },
-      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
-      "typeVersion": 1,
-      "position": [
-        416,
-        624
-      ],
-      "id": "6ebc5b01-e92c-4d18-85d6-78fe4f87f444",
-      "name": "Google Gemini Chat Model1",
-      "credentials": {
-        "googlePalmApi": {
-          "id": "eVduVpqXCnvdxUWf",
-          "name": "Google Gemini(PaLM) Api account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "sessionIdType": "customKey",
-        "sessionKey": "={{ $json.sessionId }}",
-        "contextWindowLength": 10
-      },
-      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
-      "typeVersion": 1.3,
-      "position": [
-        608,
-        624
-      ],
-      "id": "5c66c3b2-5973-442a-8143-82a068df725e",
-      "name": "Simple Memory1"
-    },
-    {
-      "parameters": {
-        "rules": {
-          "values": [
-            {
-              "conditions": {
-                "options": {
-                  "caseSensitive": true,
-                  "leftValue": "",
-                  "typeValidation": "strict",
-                  "version": 2
-                },
-                "conditions": [
-                  {
-                    "leftValue": "={{ $json.output }}",
-                    "rightValue": "create_participant",
-                    "operator": {
-                      "type": "string",
-                      "operation": "contains"
-                    },
-                    "id": "f35b4e2a-6367-41c6-ac39-d864a45b4cd9"
-                  }
-                ],
-                "combinator": "and"
-              }
-            }
-          ]
-        },
-        "options": {
-          "fallbackOutput": "extra"
-        }
-      },
-      "type": "n8n-nodes-base.switch",
-      "typeVersion": 3.3,
-      "position": [
-        816,
-        400
-      ],
-      "id": "0a26d65d-85ac-45d7-85bb-3b6d1125e206",
-      "name": "Switch1"
-    },
-    {
-      "parameters": {
-        "message": "={{\n  $json.Response === false\n    ? ($json.Message?.includes('Duplicated entries not allowed')\n        ? 'Thank you for your interest! Unfortunately, participants can only enter once per sweepstake. We appreciate your enthusiasm! 🎉'\n        : `Sorry, there was an error: ${$json.Message}`)\n    : 'Thank you for participating! Your entry has been received. 🎊'\n}}",
-        "waitUserReply": false,
-        "options": {}
-      },
-      "type": "@n8n/n8n-nodes-langchain.chat",
-      "typeVersion": 1,
-      "position": [
-        1504,
-        304
-      ],
-      "id": "3b45c2ec-7b83-4f36-a1ca-51f3b46d3e59",
-      "name": "Respond to Chat2"
-    },
-    {
-      "parameters": {
-        "public": true,
-        "options": {
-          "responseMode": "responseNodes"
-        }
-      },
-      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
-      "typeVersion": 1.3,
-      "position": [
-        -208,
-        400
-      ],
-      "id": "5aa7ee6a-294b-41fc-983f-62a46efb53c0",
-      "name": "When chat message received",
-      "webhookId": "1fa9ca26-8bed-4b45-903a-f76f93ade909"
-    },
-    {
-      "parameters": {
-        "message": "={{ $('AI Agent1').item.json.output }}",
-        "waitUserReply": false,
-        "options": {}
-      },
-      "type": "@n8n/n8n-nodes-langchain.chat",
-      "typeVersion": 1,
-      "position": [
-        1040,
-        496
-      ],
-      "id": "8a582ddd-7bdf-445f-baf8-804c7f904b08",
-      "name": "Respond to Chat"
-    },
-    {
-      "parameters": {
-        "jsCode": "/* Extract AI Response And Prompt Data */\nconst aiOutput   = $input.first().json.output;\nconst promptData = $('Build Dynamic Prompt').first().json;\n\n/* Clean Markdown */\nconst cleanOutput = aiOutput.replace(/```json\\s*/g, '').replace(/```/g, '').trim();\n\n/* Parse JSON */\nconst parsed = JSON.parse(cleanOutput);\n\n/* Check Action */\nif (parsed.action !== 'create_participant') {\n\treturn { json: {} };\n}\n\n/* Remove Action */\nconst { action, ...fields } = parsed;\n\n/* Extract Email And Phone Values */\nconst keyEmail       = fields[promptData.emailFieldSlug] || '';\nconst keyPhoneNumber = fields[promptData.phoneFieldSlug] || '';\n\n/* Debug Output */\nconst result = {\n\tKeyEmail       : keyEmail,\n\tKeyPhoneNumber : keyPhoneNumber,\n\tBonusEntries   : 0,\n\tFields         : fields\n};\n\nconsole.log('=== TRANSFORM OUTPUT ===');\nconsole.log(JSON.stringify(result, null, 2));\n\n/* Return Format For Sweeppea Node */\nreturn {\n\tjson: result\n};"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        1040,
-        304
-      ],
-      "id": "3afc200f-359a-4bb7-a8c3-3aa002f163ab",
-      "name": "Transform AI Response to API Format"
-    },
-    {
-      "parameters": {
-        "operation": "getFormFields",
-        "sweepstakesToken": "965a7edb-1f46-4116-a394-9c8a63769284",
-        "additionalFields": {}
-      },
-      "type": "n8n-nodes-sweeppea.sweeppea",
-      "typeVersion": 1,
-      "position": [
-        16,
-        400
-      ],
-      "id": "392dc422-851c-4105-b679-6637d2478ca5",
-      "name": "Get sweepstake form fields",
-      "credentials": {
-        "sweeppeaApi": {
-          "id": "x5aanJN41DK3H75j",
-          "name": "Sweeppea V3"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "sweepstakesToken": "965a7edb-1f46-4116-a394-9c8a63769284",
-        "additionalFields": {}
-      },
-      "type": "n8n-nodes-sweeppea.sweeppea",
-      "typeVersion": 1,
-      "position": [
-        1248,
-        304
-      ],
-      "id": "da5f4fdf-7fa3-45d1-8fa2-b6a49f6fd781",
-      "name": "Create a participant",
-      "credentials": {
-        "sweeppeaApi": {
-          "id": "x5aanJN41DK3H75j",
-          "name": "Sweeppea V3"
-        }
-      },
-      "onError": "continueRegularOutput"
-    }
-  ],
-  "pinData": {},
-  "connections": {
-    "Build Dynamic Prompt": {
-      "main": [
-        [
-          {
-            "node": "AI Agent1",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "AI Agent1": {
-      "main": [
-        [
-          {
-            "node": "Switch1",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Google Gemini Chat Model1": {
-      "ai_languageModel": [
-        [
-          {
-            "node": "AI Agent1",
-            "type": "ai_languageModel",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Simple Memory1": {
-      "ai_memory": [
-        [
-          {
-            "node": "AI Agent1",
-            "type": "ai_memory",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Switch1": {
-      "main": [
-        [
-          {
-            "node": "Transform AI Response to API Format",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Respond to Chat",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "When chat message received": {
-      "main": [
-        [
-          {
-            "node": "Get sweepstake form fields",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Transform AI Response to API Format": {
-      "main": [
-        [
-          {
-            "node": "Create a participant",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Get sweepstake form fields": {
-      "main": [
-        [
-          {
-            "node": "Build Dynamic Prompt",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Create a participant": {
-      "main": [
-        [
-          {
-            "node": "Respond to Chat2",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    }
-  },
-  "active": true,
-  "settings": {
-    "executionOrder": "v1"
-  },
-  "versionId": "9aa4e720-5ce4-4c09-8aed-47258bdc889b",
-  "meta": {
-    "templateCredsSetupCompleted": true,
-    "instanceId": "97cc809dc15184aed10e7202e73fcbe8e8f615b1384fd3e68d3888b8c799fcc0"
-  },
-  "id": "EUfRdBoReObMQEBB",
-  "tags": []
+	"name": "Sweeppea Create Participant Dynamic Form",
+	"nodes": [
+		{
+			"parameters": {
+				"jsCode": "/* Convert API v3 Response To Dynamic System Prompt */\n\nconst responseData = $input.first().json;\nconst data         = responseData.Data;\n\nif (!data || !data.FormFields) {\n\tthrow new Error('Response data invalid or empty');\n}\n\n/* Create Slug Function: \"First Name\" → \"First_Name\", keep punctuation */\nconst toSlug = (name) => {\n\treturn name\n\t\t.trim()\n\t\t.replace(/\\s+/g, '_'); // Replace spaces with underscores\n};\n\n/* Create Field Mapping: slug -> field data */\nconst fieldMapping = {};\ndata.FormFields.forEach(f => {\n\tconst slug = toSlug(f.Name);\n\tfieldMapping[slug] = {\n\t\tid          : f.Id,\n\t\tname        : f.Name,\n\t\ttype        : f.Type,\n\t\trequired    : f.Required,\n\t\tplaceholder : f.Placeholder,\n\t\toptions     : f.Options || []\n\t};\n});\n\n/* Find Email And Phone Fields */\nconst emailField = data.FormFields.find(f => f.Type === 'email');\nconst phoneField = data.FormFields.find(f => f.Type === 'usphonenumber');\n\n/* Separate Required And Optional Fields */\nconst requiredFields = data.FormFields.filter(f => f.Required);\nconst optionalFields = data.FormFields.filter(f => !f.Required);\n\n/* Build Required Fields List */\nconst requiredList = requiredFields.map(f => {\n\tconst placeholder = f.Placeholder && f.Placeholder !== '' ? ` - Example: ${f.Placeholder}` : '';\n\tconst options     = f.Options && f.Options.length > 0 \n\t\t? ` - Options: ${f.Options.map(o => `${o.Id}: ${o.Name}`).join(', ')}`\n\t\t: '';\n\treturn `- ${f.Name}${placeholder}${options}`;\n}).join('\\n');\n\n/* Build Optional Fields List */\nconst optionalList = optionalFields.length > 0 \n\t? '\\n\\nOptional fields:\\n' + optionalFields.map(f => {\n\t\tconst placeholder = f.Placeholder && f.Placeholder !== '' ? ` - Example: ${f.Placeholder}` : '';\n\t\tconst options     = f.Options && f.Options.length > 0 \n\t\t\t? ` - Options: ${f.Options.map(o => `${o.Id}: ${o.Name}`).join(', ')}`\n\t\t\t: '';\n\t\treturn `- ${f.Name}${placeholder}${options}`;\n\t}).join('\\n')\n\t: '';\n\n/* Build JSON Example */\nconst jsonExample = {};\ndata.FormFields.forEach(f => {\n\tconst slug = toSlug(f.Name);\n\tif (f.Type === 'list' && f.Options.length > 0) {\n\t\tjsonExample[slug] = String(f.Options[0].Id);\n\t} else if (f.Type === 'email') {\n\t\tjsonExample[slug] = 'user@example.com';\n\t} else if (f.Type === 'usphonenumber') {\n\t\tjsonExample[slug] = '1234567890';\n\t} else if (f.Type === 'birthdate') {\n\t\tjsonExample[slug] = 'MM/DD/YYYY';\n\t} else if (f.Type === 'number') {\n\t\tjsonExample[slug] = '0';\n\t} else {\n\t\tjsonExample[slug] = '<value>';\n\t}\n});\n\n/* Dynamic System Prompt */\nconst systemPrompt = `You are a friendly assistant helping users register for a sweepstake.\n\nWhen you have ALL the required data from the user, respond ONLY with a JSON object containing the user's information.\n\nRequired fields:\n${requiredList}${optionalList}\n\nWhen you have ALL the required data, respond with this EXACT JSON format (use the exact field names with underscores):\n\n{\n  \"action\": \"create_participant\",\n${Object.entries(jsonExample).map(([key, val]) => `  \"${key}\": \"${val}\"`).join(',\\n')}\n}\n\nImportant:\n- Ask for ONE field at a time in a conversational way\n- Be friendly and engaging\n- Validate data formats before proceeding\n- When you have ALL the required data, respond ONLY with the JSON (no additional text)\n- Use EXACTLY the field names shown above (with underscores replacing spaces)\n- For list/select fields, use the option ID number, not the name\n- DO NOT use placeholder text, use actual user data\n- DO NOT include any other fields in the JSON`;\n\n/* Return System Prompt And Data */\nreturn {\n\tjson: {\n\t\tsystemPrompt       : systemPrompt,\n\t\tfieldMapping       : fieldMapping,\n\t\temailFieldSlug     : emailField ? toSlug(emailField.Name) : 'Email',\n\t\tphoneFieldSlug     : phoneField ? toSlug(phoneField.Name) : 'Mobile_Number',\n\t\tsweepstakesToken   : data.SweepstakesToken,\n\t\tentryPageToken     : data.EntryPageToken,\n\t\tchatInput          : $('When chat message received').item.json.chatInput,\n\t\tsessionId          : $('When chat message received').item.json.sessionId\n\t}\n};"
+			},
+			"type": "n8n-nodes-base.code",
+			"typeVersion": 2,
+			"position": [
+				224,
+				400
+			],
+			"id": "719ca6a8-a6d1-436c-ad79-a9eaa104ea1a",
+			"name": "Build Dynamic Prompt"
+		},
+		{
+			"parameters": {
+				"promptType": "define",
+				"text": "={{ $json.chatInput }}",
+				"options": {
+				"systemMessage": "={{ $json.systemPrompt }}"
+				}
+			},
+			"type": "@n8n/n8n-nodes-langchain.agent",
+			"typeVersion": 2.2,
+			"position": [
+				464,
+				400
+			],
+			"id": "bab6dfb9-aa7a-44c8-993a-a1c82689cdb0",
+			"name": "AI Agent1"
+		},
+		{
+			"parameters": {
+				"options": {}
+			},
+			"type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+			"typeVersion": 1,
+			"position": [
+				416,
+				624
+			],
+			"id": "6ebc5b01-e92c-4d18-85d6-78fe4f87f444",
+			"name": "Google Gemini Chat Model1",
+			"credentials": {
+				"googlePalmApi": {
+				"id": "eVduVpqXCnvdxUWf",
+				"name": "Google Gemini(PaLM) Api account"
+				}
+			}
+		},
+		{
+			"parameters": {
+				"sessionIdType": "customKey",
+				"sessionKey": "={{ $json.sessionId }}",
+				"contextWindowLength": 10
+			},
+			"type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+			"typeVersion": 1.3,
+			"position": [
+				608,
+				624
+			],
+			"id": "5c66c3b2-5973-442a-8143-82a068df725e",
+			"name": "Simple Memory1"
+		},
+		{
+		"parameters": {
+			"rules": {
+			"values":
+			[
+				{
+				"conditions": {
+					"options": {
+						"caseSensitive": true,
+						"leftValue": "",
+						"typeValidation": "strict",
+						"version": 2
+					},
+					"conditions":
+					[
+						{
+							"leftValue": "={{ $json.output }}",
+							"rightValue": "create_participant",
+							"operator": {
+								"type": "string",
+								"operation": "contains"
+							},
+							"id": "f35b4e2a-6367-41c6-ac39-d864a45b4cd9"
+						}
+					],
+					"combinator": "and"
+				}
+				}
+			]
+			},
+				"options": {
+				"fallbackOutput": "extra"
+			}
+		},
+			"type": "n8n-nodes-base.switch",
+			"typeVersion": 3.3,
+			"position": [
+				816,
+				400
+			],
+			"id": "0a26d65d-85ac-45d7-85bb-3b6d1125e206",
+			"name": "Switch1"
+		},
+		{
+			"parameters": {
+				"message": "={{\n  $json.Response === false\n    ? ($json.Message?.includes('Duplicated entries not allowed')\n        ? 'Thank you for your interest! Unfortunately, participants can only enter once per sweepstake. We appreciate your enthusiasm! 🎉'\n        : `Sorry, there was an error: ${$json.Message}`)\n    : 'Thank you for participating! Your entry has been received. 🎊'\n}}",
+				"waitUserReply": false,
+				"options": {}
+			},
+			"type": "@n8n/n8n-nodes-langchain.chat",
+			"typeVersion": 1,
+			"position": [
+				1504,
+				304
+			],
+			"id": "3b45c2ec-7b83-4f36-a1ca-51f3b46d3e59",
+			"name": "Respond to Chat2"
+		},
+		{
+			"parameters": {
+				"public": true,
+				"options": {
+				"responseMode": "responseNodes"
+				}
+			},
+			"type": "@n8n/n8n-nodes-langchain.chatTrigger",
+			"typeVersion": 1.3,
+			"position": [
+				-208,
+				400
+			],
+			"id": "5aa7ee6a-294b-41fc-983f-62a46efb53c0",
+			"name": "When chat message received",
+			"webhookId": "1fa9ca26-8bed-4b45-903a-f76f93ade909"
+		},
+		{
+			"parameters": {
+				"message": "={{ $('AI Agent1').item.json.output }}",
+				"waitUserReply": false,
+				"options": {}
+			},
+			"type": "@n8n/n8n-nodes-langchain.chat",
+			"typeVersion": 1,
+			"position": [
+				1040,
+				496
+			],
+			"id": "8a582ddd-7bdf-445f-baf8-804c7f904b08",
+			"name": "Respond to Chat"
+		},
+		{
+			"parameters": {
+				"jsCode": "/* Extract AI Response And Prompt Data */\nconst aiOutput   = $input.first().json.output;\nconst promptData = $('Build Dynamic Prompt').first().json;\n\n/* Clean Markdown */\nconst cleanOutput = aiOutput.replace(/```json\\s*/g, '').replace(/```/g, '').trim();\n\n/* Parse JSON */\nconst parsed = JSON.parse(cleanOutput);\n\n/* Check Action */\nif (parsed.action !== 'create_participant') {\n\treturn { json: {} };\n}\n\n/* Remove Action */\nconst { action, ...fields } = parsed;\n\n/* Extract Email And Phone Values */\nconst keyEmail       = fields[promptData.emailFieldSlug] || '';\nconst keyPhoneNumber = fields[promptData.phoneFieldSlug] || '';\n\n/* Debug Output */\nconst result = {\n\tKeyEmail       : keyEmail,\n\tKeyPhoneNumber : keyPhoneNumber,\n\tBonusEntries   : 0,\n\tFields         : fields\n};\n\nconsole.log('=== TRANSFORM OUTPUT ===');\nconsole.log(JSON.stringify(result, null, 2));\n\n/* Return Format For Sweeppea Node */\nreturn {\n\tjson: result\n};"
+			},
+			"type": "n8n-nodes-base.code",
+			"typeVersion": 2,
+			"position": [
+				1040,
+				304
+			],
+			"id": "3afc200f-359a-4bb7-a8c3-3aa002f163ab",
+			"name": "Transform AI Response to API Format"
+		},
+		{
+			"parameters": {
+				"operation": "getFormFields",
+				"sweepstakesToken": "965a7edb-1f46-4116-a394-9c8a63769284",
+				"additionalFields": {}
+			},
+			"type": "n8n-nodes-sweeppea.sweeppea",
+			"typeVersion": 1,
+			"position": [
+				16,
+				400
+			],
+			"id": "392dc422-851c-4105-b679-6637d2478ca5",
+			"name": "Get sweepstake form fields",
+			"credentials": {
+				"sweeppeaApi": {
+				"id": "x5aanJN41DK3H75j",
+				"name": "Sweeppea V3"
+				}
+			}
+		},
+		{
+			"parameters": {
+				"sweepstakesToken": "965a7edb-1f46-4116-a394-9c8a63769284",
+				"additionalFields": {}
+			},
+			"type": "n8n-nodes-sweeppea.sweeppea",
+			"typeVersion": 1,
+			"position": [
+				1248,
+				304
+			],
+			"id": "da5f4fdf-7fa3-45d1-8fa2-b6a49f6fd781",
+			"name": "Create a participant",
+			"credentials": {
+				"sweeppeaApi": {
+				"id": "x5aanJN41DK3H75j",
+				"name": "Sweeppea V3"
+				}
+			},
+			"onError": "continueRegularOutput"
+		}
+	],
+	"pinData": {},
+	"connections": {
+		"Build Dynamic Prompt": {
+		"main": [
+			[
+				{
+					"node": "AI Agent1",
+					"type": "main",
+					"index": 0
+				}
+			]
+		]
+		},
+		"AI Agent1": {
+		"main": [
+			[
+				{
+					"node": "Switch1",
+					"type": "main",
+					"index": 0
+				}
+			]
+		]
+		},
+		"Google Gemini Chat Model1": {
+		"ai_languageModel": [
+			[
+				{
+					"node": "AI Agent1",
+					"type": "ai_languageModel",
+					"index": 0
+				}
+			]
+		]
+		},
+		"Simple Memory1": {
+		"ai_memory": [
+			[
+				{
+					"node": "AI Agent1",
+					"type": "ai_memory",
+					"index": 0
+				}
+			]
+		]
+		},
+		"Switch1": {
+		"main": [
+			[
+				{
+					"node": "Transform AI Response to API Format",
+					"type": "main",
+					"index": 0
+				}
+			],
+			[
+				{
+					"node": "Respond to Chat",
+					"type": "main",
+					"index": 0
+				}
+			]
+		]
+		},
+		"When chat message received": {
+		"main": [
+			[
+				{
+					"node": "Get sweepstake form fields",
+					"type": "main",
+					"index": 0
+				}
+			]
+		]
+		},
+		"Transform AI Response to API Format": {
+		"main": [
+			[
+				{
+					"node": "Create a participant",
+					"type": "main",
+					"index": 0
+				}
+			]
+		]
+		},
+		"Get sweepstake form fields": {
+		"main": [
+			[
+				{
+					"node": "Build Dynamic Prompt",
+					"type": "main",
+					"index": 0
+				}
+			]
+		]
+		},
+		"Create a participant": {
+		"main": [
+			[
+				{
+					"node": "Respond to Chat2",
+					"type": "main",
+					"index": 0
+				}
+			]
+		]
+		}
+	},
+	"active": true,
+	"settings": {
+		"executionOrder": "v1"
+	},
+	"versionId": "9aa4e720-5ce4-4c09-8aed-47258bdc889b",
+	"meta": {
+		"templateCredsSetupCompleted": true,
+		"instanceId": "97cc809dc15184aed10e7202e73fcbe8e8f615b1384fd3e68d3888b8c799fcc0"
+	},
+	"id": "EUfRdBoReObMQEBB",
+	"tags": []
 }
