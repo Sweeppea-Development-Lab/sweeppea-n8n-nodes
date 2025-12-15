@@ -1,6 +1,6 @@
 {
 	"name": "n8n-nodes-sweeppea",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"description": "N8N community node for integrating Sweeppea sweepstakes platform with dynamic field support and AI chatbot integration",
 	"keywords": [
 		"n8n-community-node-package",

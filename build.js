@@ -44,6 +44,7 @@ let credentialsJs = credentialsTs
 	.replace(/export class SweeppeaApi implements ICredentialType/g, 'class SweeppeaApi')
 	.replace(/:\s*INodeProperties\[\]/g, '')
 	.replace(/:\s*IAuthenticateGeneric\s*=/g, ' =')
+	.replace(/:\s*ICredentialTestRequest\s*=/g, ' =')
 	.replace(/:\s*string/g, '').replace(/:\s*number/g, '').replace(/:\s*boolean/g, '');
 
 credentialsJs = '"use strict";\nObject.defineProperty(exports, "__esModule", { value: true });\nexports.SweeppeaApi = void 0;\n' + credentialsJs.replace(/^\/\*/, '/*') + '\nexports.SweeppeaApi = SweeppeaApi;\n';
