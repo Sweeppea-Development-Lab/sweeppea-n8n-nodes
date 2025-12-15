@@ -13,6 +13,8 @@
 */
 
 import {
+	IAuthenticateGeneric,
+	ICredentialTestRequest,
 	ICredentialType,
 	INodeProperties,
 } from 'n8n-workflow';
@@ -94,4 +96,21 @@ export class SweeppeaApi implements ICredentialType {
 			},
 		},
 	];
+
+	authenticate: IAuthenticateGeneric = {
+		type   : 'generic',
+		properties : {
+			headers: {
+				Authorization: '={{"Bearer " + ($credentials.environment === "production" ? $credentials.apiToken : $credentials.apiKey)}}',
+			},
+		},
+	};
+
+	test: ICredentialTestRequest = {
+		request: {
+			baseURL : '={{$credentials.environment === "production" ? "https://api-v3.sweeppea.com" : $credentials.customApiUrl}}',
+			url     : '/health',
+			method  : 'GET',
+		},
+	};
 }

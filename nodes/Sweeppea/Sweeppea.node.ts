@@ -168,13 +168,12 @@ export class Sweeppea implements INodeType {
 
 						const sweepstakesToken = this.getNodeParameter('sweepstakesToken', i) as string;
 
-						const schemaResponse = await this.helpers.request({
+						const schemaResponse = await this.helpers.httpRequest({
 							method  : 'POST',
 							url     : `${baseUrl}/entrypage/fields`,
 							body    : {
 								SweepstakesToken: sweepstakesToken,
 							},
-							json    : true,
 							headers : {
 								'Content-Type'  : 'application/json',
 								'Authorization' : `Bearer ${apiToken}`,
@@ -241,11 +240,10 @@ export class Sweeppea implements INodeType {
 						};
 
 						/* Call API v3 With Bearer Auth */
-						const createResponse = await this.helpers.request({
+						const createResponse = await this.helpers.httpRequest({
 							method  : 'POST',
 							url     : `${baseUrl}/participants/add`,
 							body    : requestBody,
-							json    : true,
 							headers : {
 								'Content-Type'  : 'application/json',
 								'Authorization' : `Bearer ${apiToken}`,
