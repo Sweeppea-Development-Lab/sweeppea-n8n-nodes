@@ -109,8 +109,8 @@ export class SweeppeaApi implements ICredentialType {
 	test: ICredentialTestRequest = {
 		request: {
 			baseURL : '={{$credentials.environment === "production" ? "https://api-v3.sweeppea.com" : $credentials.customApiUrl}}',
-			url     : '/health',
-			method  : 'GET',
+			url     : '/account/health-check',
+			method  : 'POST',
 		},
 	};
 }
