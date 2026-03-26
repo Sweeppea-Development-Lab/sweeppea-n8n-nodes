@@ -71,7 +71,7 @@ export class SweeppeaApi implements ICredentialType {
 			typeOptions : {
 				password: true,
 			},
-			default       : 'sk_test_mock123456789',
+			default       : '',
 			required      : true,
 			description   : 'Your Sweeppea API key for development',
 			placeholder   : 'sk_test_mock123456789',
