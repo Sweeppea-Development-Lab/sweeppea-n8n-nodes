@@ -32,7 +32,13 @@ import {
 	participantOperations,
 } from './descriptions/ParticipantDescription';
 
+import {
+	sweepstakeFields,
+	sweepstakeOperations,
+} from './descriptions/SweepstakeDescription';
+
 import * as participantOps from './operations/participant';
+import * as sweepstakeOps from './operations/sweepstake';
 
 export class Sweeppea implements INodeType {
 
@@ -73,11 +79,17 @@ export class Sweeppea implements INodeType {
 						name  : 'Participant',
 						value : 'participant',
 					},
+					{
+						name  : 'Sweepstake',
+						value : 'sweepstake',
+					},
 				],
 				default: 'participant',
 			},
 			...participantOperations,
+			...sweepstakeOperations,
 			...participantFields,
+			...sweepstakeFields,
 		],
 		usableAsTool: true,
 	};
@@ -120,6 +132,41 @@ export class Sweeppea implements INodeType {
 					} else if (operation === 'getMany') {
 
 						result = await participantOps.getMany.call(this, i);
+
+					} else {
+
+						throw new NodeOperationError(
+							this.getNode(),
+							`Unknown operation "${operation}" for resource "${resource}"`,
+							{ itemIndex: i },
+						);
+					}
+
+				} else if (resource === 'sweepstake') {
+
+					if (operation === 'clone') {
+
+						result = await sweepstakeOps.clone.call(this, i);
+
+					} else if (operation === 'create') {
+
+						result = await sweepstakeOps.create.call(this, i);
+
+					} else if (operation === 'getMany') {
+
+						result = await sweepstakeOps.getMany.call(this, i);
+
+					} else if (operation === 'pause') {
+
+						result = await sweepstakeOps.pause.call(this, i);
+
+					} else if (operation === 'unpause') {
+
+						result = await sweepstakeOps.unpause.call(this, i);
+
+					} else if (operation === 'update') {
+
+						result = await sweepstakeOps.update.call(this, i);
 
 					} else {
 
