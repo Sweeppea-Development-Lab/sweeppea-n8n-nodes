@@ -37,8 +37,14 @@ import {
 	sweepstakeOperations,
 } from './descriptions/SweepstakeDescription';
 
+import {
+	winnerFields,
+	winnerOperations,
+} from './descriptions/WinnerDescription';
+
 import * as participantOps from './operations/participant';
 import * as sweepstakeOps from './operations/sweepstake';
+import * as winnerOps from './operations/winner';
 
 export class Sweeppea implements INodeType {
 
@@ -83,13 +89,19 @@ export class Sweeppea implements INodeType {
 						name  : 'Sweepstake',
 						value : 'sweepstake',
 					},
+					{
+						name  : 'Winner',
+						value : 'winner',
+					},
 				],
 				default: 'participant',
 			},
 			...participantOperations,
 			...sweepstakeOperations,
+			...winnerOperations,
 			...participantFields,
 			...sweepstakeFields,
+			...winnerFields,
 		],
 		usableAsTool: true,
 	};
@@ -167,6 +179,25 @@ export class Sweeppea implements INodeType {
 					} else if (operation === 'update') {
 
 						result = await sweepstakeOps.update.call(this, i);
+
+					} else {
+
+						throw new NodeOperationError(
+							this.getNode(),
+							`Unknown operation "${operation}" for resource "${resource}"`,
+							{ itemIndex: i },
+						);
+					}
+
+				} else if (resource === 'winner') {
+
+					if (operation === 'draw') {
+
+						result = await winnerOps.draw.call(this, i);
+
+					} else if (operation === 'getMany') {
+
+						result = await winnerOps.getMany.call(this, i);
 
 					} else {
 
