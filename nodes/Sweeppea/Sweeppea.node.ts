@@ -6,20 +6,33 @@
 	                    |_|  |_|
 
 	Platform  : Sweeppea N8N Integration
-	Version   : 1.0
+	Version   : 0.2.0
 	Path      : /nodes/Sweeppea/Sweeppea.node.ts
 
 	(c) Sweeppea, all rights reserved.
 */
 
 import {
-	IDataObject,
 	IExecuteFunctions,
 	INodeExecutionData,
 	INodeType,
 	INodeTypeDescription,
+	JsonObject,
+	NodeConnectionTypes,
 	NodeOperationError,
 } from 'n8n-workflow';
+
+import {
+	buildErrorReturnData,
+	mapApiError,
+} from './GenericFunctions';
+
+import {
+	participantFields,
+	participantOperations,
+} from './descriptions/ParticipantDescription';
+
+import * as participantOps from './operations/participant';
 
 export class Sweeppea implements INodeType {
 
@@ -30,20 +43,20 @@ export class Sweeppea implements INodeType {
 		group       : ['transform'],
 		version     : 1,
 		subtitle    : '={{$parameter["operation"] + ": " + $parameter["resource"]}}',
-		description : 'Interact with Sweeppea API',
-		defaults       : {
-			name : 'Sweeppea',
+		description : 'Interact with the Sweeppea API',
+		defaults    : {
+			name: 'Sweeppea',
 		},
-		inputs         : ['main'],
-		outputs        : ['main'],
-		credentials : [
+		inputs         : [NodeConnectionTypes.Main],
+		outputs        : [NodeConnectionTypes.Main],
+		credentials    : [
 			{
 				name     : 'sweeppeaApi',
 				required : true,
 			},
 		],
 		requestDefaults: {
-			baseURL : '={{$credentials.environment === "production" ? "https://api-v3.sweeppea.com": $credentials.customApiUrl}}',
+			baseURL : '={{$credentials.environment === "production" ? "https://api-v3.sweeppea.com" : $credentials.customApiUrl}}',
 			headers : {
 				Accept         : 'application/json',
 				'Content-Type' : 'application/json',
@@ -63,241 +76,66 @@ export class Sweeppea implements INodeType {
 				],
 				default: 'participant',
 			},
-			{
-				displayName      : 'Operation',
-				name             : 'operation',
-				type             : 'options',
-				noDataExpression : true,
-				displayOptions   : {
-					show: {
-						resource: ['participant'],
-					},
-				},
-				options: [
-					{
-						name        : 'Get Form Fields',
-						value       : 'getFormFields',
-						description : 'Get the entry form fields for a sweepstake',
-						action      : 'Get sweepstake form fields',
-					},
-					{
-						name        : 'Create',
-						value       : 'create',
-						description : 'Create a new participant in a sweepstake',
-						action      : 'Create a participant',
-					},
-				],
-				default: 'create',
-			},
-			{
-				displayName    : 'Sweepstakes Token',
-				name           : 'sweepstakesToken',
-				type           : 'string',
-				typeOptions    : {
-					password: true,
-				},
-				required       : true,
-				displayOptions : {
-					show: {
-						resource  : ['participant'],
-						operation : ["getFormFields", "create"],
-					},
-				},
-				default     : '',
-				placeholder : '83d12d10-7a6d-4f99-a546-5a1c3cc267f9',
-				description : 'The sweepstakes UUID token',
-			},
-			{
-				displayName    : 'Additional Fields',
-				name           : 'additionalFields',
-				type           : 'collection',
-				placeholder    : 'Add Field',
-				default        : {},
-				displayOptions : {
-					show: {
-						resource  : ['participant'],
-						operation : ['getFormFields', 'create'],
-					},
-				},
-				options: [
-					{
-						displayName : 'Use Input Data',
-						name        : 'useInputData',
-						type        : 'boolean',
-						default     : true,
-						description : 'Whether to use all data from the input item as participant data',
-					},
-				],
-			},
+			...participantOperations,
+			...participantFields,
 		],
 	};
 
 	async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
 
 		const items      = this.getInputData();
-		const returnData: INodeExecutionData[] = [];
+		const returnData : INodeExecutionData[] = [];
 		const resource   = this.getNodeParameter('resource', 0) as string;
 		const operation  = this.getNodeParameter('operation', 0) as string;
 
-		/* Get Credentials */
-		const credentials = await this.getCredentials('sweeppeaApi');
-		const environment = credentials.environment as string;
+		for (let i = 0; i < items.length; i++) {
 
-		let baseUrl  : string;
-		let apiToken : string;
+			try {
 
-		if (environment === 'production') {
+				let result: INodeExecutionData;
 
-			baseUrl  = 'https://api-v3.sweeppea.com';
-			apiToken = credentials.apiToken as string;
+				if (resource === 'participant') {
 
-		} else {
+					if (operation === 'getFormFields') {
 
-			baseUrl  = (credentials.customApiUrl as string) || 'http://localhost:3002';
-			apiToken = credentials.apiKey as string;
-		}
+						result = await participantOps.getFormFields.call(this, i);
 
-		if (resource === 'participant') {
+					} else if (operation === 'create') {
 
-			if (operation === 'getFormFields') {
+						result = await participantOps.create.call(this, i);
 
-				/* Get Form Fields Operation - Fetch Entry Page Fields */
-				for (let i = 0; i < items.length; i++) {
+					} else {
 
-					try {
-
-						const sweepstakesToken = this.getNodeParameter('sweepstakesToken', i) as string;
-
-						const schemaResponse = await this.helpers.httpRequest({
-							method  : 'POST',
-							url     : `${baseUrl}/entrypage/fields`,
-							body    : {
-								SweepstakesToken: sweepstakesToken,
-							},
-							headers : {
-								'Content-Type'  : 'application/json',
-								'Authorization' : `Bearer ${apiToken}`,
-							},
-						});
-
-						returnData.push({
-							json       : schemaResponse as IDataObject,
-							pairedItem : { item: i },
-						});
-
-					} catch (error) {
-
-						if (error.httpCode === 404) {
-
-							throw new NodeOperationError(
-								this.getNode(),
-								`Sweepstake not found. Please verify the Sweepstakes Token is correct.`,
-								{ itemIndex: i },
-							);
-						}
-
-						if (this.continueOnFail()) {
-
-							const errorBody = error.response?.body || {};
-
-							returnData.push({
-								json       : Object.keys(errorBody).length > 0 ? errorBody : {
-									Response  : false,
-									Message   : error.message,
-									itemIndex : i,
-								},
-								pairedItem : { item: i },
-							});
-
-							continue;
-						}
-
-						throw error;
+						throw new NodeOperationError(
+							this.getNode(),
+							`Unknown operation "${operation}" for resource "${resource}"`,
+							{ itemIndex: i },
+						);
 					}
+
+				} else {
+
+					throw new NodeOperationError(
+						this.getNode(),
+						`Unknown resource "${resource}"`,
+						{ itemIndex: i },
+					);
 				}
 
-			} else if (operation === 'create') {
+				returnData.push(result);
 
-				/* Create Participant Operation */
-				for (let i = 0; i < items.length; i++) {
+			} catch (error) {
 
-					try {
+				if (this.continueOnFail()) {
 
-						const inputData        = items[i].json;
-						const sweepstakesToken = this.getNodeParameter('sweepstakesToken', i) as string;
+					returnData.push(buildErrorReturnData(error as JsonObject, i));
 
-						/* Build Request Body For API v3 */
-						const requestBody = {
-							lang             : inputData.lang || 'EN',
-							source           : inputData.source || 'n8n-integration',
-							sweepstakesToken : sweepstakesToken,
-							entryPageFields  : {
-								KeyPhoneNumber : inputData.KeyPhoneNumber || '',
-								KeyEmail       : inputData.KeyEmail || '',
-								BonusEntries   : inputData.BonusEntries || 0,
-								Fields         : inputData.Fields || {},
-							},
-						};
-
-						/* Call API v3 With Bearer Auth */
-						const createResponse = await this.helpers.httpRequest({
-							method  : 'POST',
-							url     : `${baseUrl}/participants/add`,
-							body    : requestBody,
-							headers : {
-								'Content-Type'  : 'application/json',
-								'Authorization' : `Bearer ${apiToken}`,
-							},
-						});
-
-						returnData.push({
-							json       : createResponse as IDataObject,
-							pairedItem : { item: i },
-						});
-
-					} catch (error) {
-
-						/* If Continue On Fail Is Enabled, Return Error As Data */
-						if (this.continueOnFail()) {
-
-							const errorBody = error.response?.body || {};
-
-							returnData.push({
-								json       : Object.keys(errorBody).length > 0 ? errorBody : {
-									Response  : false,
-									Message   : error.message,
-									itemIndex : i,
-								},
-								pairedItem : { item: i },
-							});
-
-							continue;
-						}
-
-						/* Otherwise, Throw Detailed Error */
-						if (error.httpCode === 404 || error.statusCode === 404) {
-
-							throw new NodeOperationError(
-								this.getNode(),
-								`Sweepstake not found. Please verify the Sweepstakes Token is correct.`,
-								{ itemIndex: i },
-							);
-
-						} else if (error.httpCode === 400 || error.statusCode === 400) {
-
-							const apiError     = error.response?.body || {};
-							const errorMessage = apiError.Message || apiError.message || 'Validation failed';
-
-							throw new NodeOperationError(
-								this.getNode(),
-								errorMessage,
-								{ itemIndex: i },
-							);
-						}
-
-						throw error;
-					}
+					continue;
 				}
+
+				/* mapApiError() Maps Raw API Errors To NodeOperation/ApiError */
+				/* And Passes Through Already-typed Errors Unchanged           */
+				throw mapApiError(this.getNode(), error, i);
 			}
 		}
 

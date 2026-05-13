@@ -16,6 +16,7 @@ import {
 	IAuthenticateGeneric,
 	ICredentialTestRequest,
 	ICredentialType,
+	Icon,
 	INodeProperties,
 } from 'n8n-workflow';
 
@@ -25,9 +26,10 @@ import {
  */
 export class SweeppeaApi implements ICredentialType {
 
-	name        = 'sweeppeaApi';
-	displayName = 'Sweeppea API';
+	name             = 'sweeppeaApi';
+	displayName      = 'Sweeppea API';
 	documentationUrl = 'https://apidocs.sweeppea.com';
+	icon: Icon       = 'file:sweeppea.svg';
 
 	properties: INodeProperties[] = [
 		{
