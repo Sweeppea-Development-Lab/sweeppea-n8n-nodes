@@ -79,6 +79,7 @@ export class Sweeppea implements INodeType {
 			...participantOperations,
 			...participantFields,
 		],
+		usableAsTool: true,
 	};
 
 	async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
@@ -92,17 +93,33 @@ export class Sweeppea implements INodeType {
 
 			try {
 
-				let result: INodeExecutionData;
+				let result: INodeExecutionData[];
 
 				if (resource === 'participant') {
 
-					if (operation === 'getFormFields') {
+					if (operation === 'count') {
 
-						result = await participantOps.getFormFields.call(this, i);
+						result = await participantOps.count.call(this, i);
 
 					} else if (operation === 'create') {
 
 						result = await participantOps.create.call(this, i);
+
+					} else if (operation === 'delete') {
+
+						result = await participantOps.remove.call(this, i);
+
+					} else if (operation === 'get') {
+
+						result = await participantOps.get.call(this, i);
+
+					} else if (operation === 'getFormFields') {
+
+						result = await participantOps.getFormFields.call(this, i);
+
+					} else if (operation === 'getMany') {
+
+						result = await participantOps.getMany.call(this, i);
 
 					} else {
 
@@ -122,7 +139,7 @@ export class Sweeppea implements INodeType {
 					);
 				}
 
-				returnData.push(result);
+				returnData.push(...result);
 
 			} catch (error) {
 
