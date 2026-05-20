@@ -227,9 +227,7 @@ Bottom half (CRUD round-trip, Winner, Rule):
 
 ![Showcase bottom half](examples/sweeppea-showcase-canvas-bottom.png)
 
-After a successful run with `Participant: Delete` toggled off, the test participants persist in the Sweeppea dashboard — each row uses the `n8n-demo-<execution.id>@example.com` pattern:
-
-![Participants persisted in Sweeppea App](examples/sweeppea-showcase-dashboard.png)
+After a successful run, every Sweeppea API call is verifiable in the Sweeppea dashboard: the test participants persist (with `n8n-demo-<execution.id>@example.com` as their email), the rename/revert round-trip leaves the sweepstake untouched, and Winner: Draw (when enabled) marks a real winner that shows up under the **Winners** tab.
 
 **How to use:**
 
