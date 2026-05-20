@@ -1,0 +1,564 @@
+{
+	"name": "Sweeppea v0.2.0 — Showcase (All 15 Ops)",
+	"nodes": [
+		{
+			"parameters": {
+				"content": "## Sweeppea v0.2.0 — Showcase Workflow\n\nDemo end-to-end de las **15 operations** del node, agrupadas por resource. Pensado para screenshots y exploración.\n\n- **Trigger** → **Set Config**: setea sweepstakesToken + datos de un participante demo.\n- **5 lanes** salen en paralelo desde Set Config.\n- Los nodos con borde gris/disabled (`Create`, `Clone`, `Draw`, etc.) están apagados por defecto para evitar side effects en producción. Activalos individualmente cuando quieras testearlos.\n\nCredencial usada: **Sweeppea account**\nSweepstake de test: **AGENTPRUEBA** (`512e77fa-...`)",
+				"height": 280,
+				"width": 480,
+				"color": 4
+			},
+			"type": "n8n-nodes-base.stickyNote",
+			"typeVersion": 1,
+			"position": [-720, -780],
+			"id": "00000000-0000-0000-0000-000000000001",
+			"name": "Sticky: README"
+		},
+		{
+			"parameters": {},
+			"type": "n8n-nodes-base.manualTrigger",
+			"typeVersion": 1,
+			"position": [-680, 0],
+			"id": "00000000-0000-0000-0000-000000000010",
+			"name": "When clicking 'Execute workflow'"
+		},
+		{
+			"parameters": {
+				"mode": "manual",
+				"duplicateItem": false,
+				"assignments": {
+					"assignments": [
+						{
+							"id": "a1",
+							"name": "sweepstakesToken",
+							"value": "512e77fa-3d11-4ebe-95ee-031d7ddfa593",
+							"type": "string"
+						},
+						{
+							"id": "a2",
+							"name": "testEmail",
+							"value": "=n8n-demo-{{ $execution.id }}@example.com",
+							"type": "string"
+						},
+						{
+							"id": "a3",
+							"name": "testPhone",
+							"value": "5551234567",
+							"type": "string"
+						},
+						{
+							"id": "a4",
+							"name": "lang",
+							"value": "EN",
+							"type": "string"
+						},
+						{
+							"id": "a5",
+							"name": "source",
+							"value": "n8n-showcase",
+							"type": "string"
+						},
+						{
+							"id": "a6",
+							"name": "BonusEntries",
+							"value": "=0",
+							"type": "number"
+						},
+						{
+							"id": "a7",
+							"name": "KeyEmail",
+							"value": "=n8n-demo-{{ $execution.id }}@example.com",
+							"type": "string"
+						},
+						{
+							"id": "a8",
+							"name": "KeyPhoneNumber",
+							"value": "5551234567",
+							"type": "string"
+						},
+						{
+							"id": "a9",
+							"name": "Fields",
+							"value": "={ \"First_Name\": \"N8N\", \"Last_Name\": \"Demo\", \"Email\": \"n8n-demo-\" + $execution.id + \"@example.com\", \"Mobile_Number\": \"5551234567\" }",
+							"type": "object"
+						}
+					]
+				},
+				"options": {}
+			},
+			"type": "n8n-nodes-base.set",
+			"typeVersion": 3.4,
+			"position": [-440, 0],
+			"id": "00000000-0000-0000-0000-000000000020",
+			"name": "Set Config"
+		},
+
+		{
+			"parameters": {
+				"content": "### Lane 1 — Sweepstake (6 ops)\n\nGet Many → Pause → Unpause → Update (rename) → Update (revert)\n\n**Disabled**: Create, Clone (crean datos persistentes).",
+				"height": 130,
+				"width": 1600,
+				"color": 5
+			},
+			"type": "n8n-nodes-base.stickyNote",
+			"typeVersion": 1,
+			"position": [-180, -700],
+			"id": "00000000-0000-0000-0000-000000000100",
+			"name": "Sticky: Sweepstake Lane"
+		},
+		{
+			"parameters": {
+				"resource": "sweepstake",
+				"operation": "getMany"
+			},
+			"type": "CUSTOM.sweeppea",
+			"typeVersion": 1,
+			"position": [-140, -540],
+			"id": "00000000-0000-0000-0000-000000000110",
+			"name": "Sweepstake: Get Many",
+			"credentials": {
+				"sweeppeaApi": {
+					"id": "jb5NylJkKLXtqB9M",
+					"name": "Sweeppea account"
+				}
+			}
+		},
+		{
+			"parameters": {
+				"resource": "sweepstake",
+				"operation": "pause",
+				"sweepstakesToken": "={{ $('Set Config').first().json.sweepstakesToken }}"
+			},
+			"type": "CUSTOM.sweeppea",
+			"typeVersion": 1,
+			"position": [80, -540],
+			"id": "00000000-0000-0000-0000-000000000111",
+			"name": "Sweepstake: Pause",
+			"credentials": {
+				"sweeppeaApi": {
+					"id": "jb5NylJkKLXtqB9M",
+					"name": "Sweeppea account"
+				}
+			}
+		},
+		{
+			"parameters": {
+				"resource": "sweepstake",
+				"operation": "unpause",
+				"sweepstakesToken": "={{ $('Set Config').first().json.sweepstakesToken }}"
+			},
+			"type": "CUSTOM.sweeppea",
+			"typeVersion": 1,
+			"position": [300, -540],
+			"id": "00000000-0000-0000-0000-000000000112",
+			"name": "Sweepstake: Unpause",
+			"credentials": {
+				"sweeppeaApi": {
+					"id": "jb5NylJkKLXtqB9M",
+					"name": "Sweeppea account"
+				}
+			}
+		},
+		{
+			"parameters": {
+				"resource": "sweepstake",
+				"operation": "update",
+				"sweepstakesToken": "={{ $('Set Config').first().json.sweepstakesToken }}",
+				"updateFields": {
+					"SweepstakesName": "Sorteo de Prueba Agent (N8N SHOWCASE)"
+				}
+			},
+			"type": "CUSTOM.sweeppea",
+			"typeVersion": 1,
+			"position": [520, -540],
+			"id": "00000000-0000-0000-0000-000000000113",
+			"name": "Sweepstake: Update (rename)",
+			"credentials": {
+				"sweeppeaApi": {
+					"id": "jb5NylJkKLXtqB9M",
+					"name": "Sweeppea account"
+				}
+			}
+		},
+		{
+			"parameters": {
+				"resource": "sweepstake",
+				"operation": "update",
+				"sweepstakesToken": "={{ $('Set Config').first().json.sweepstakesToken }}",
+				"updateFields": {
+					"SweepstakesName": "Sorteo de Prueba Agent"
+				}
+			},
+			"type": "CUSTOM.sweeppea",
+			"typeVersion": 1,
+			"position": [740, -540],
+			"id": "00000000-0000-0000-0000-000000000114",
+			"name": "Sweepstake: Update (revert)",
+			"credentials": {
+				"sweeppeaApi": {
+					"id": "jb5NylJkKLXtqB9M",
+					"name": "Sweeppea account"
+				}
+			}
+		},
+		{
+			"parameters": {
+				"resource": "sweepstake",
+				"operation": "create",
+				"sweepstakesName": "N8N Showcase Demo",
+				"sweepstakesType": 2,
+				"handler": "=N8NSHOWCASE{{ $now.toFormat('HHmmss') }}",
+				"startDate": "2027-01-01",
+				"endDate": "2027-12-31",
+				"startTime": "00:00",
+				"endTime": "23:59"
+			},
+			"type": "CUSTOM.sweeppea",
+			"typeVersion": 1,
+			"position": [960, -540],
+			"id": "00000000-0000-0000-0000-000000000115",
+			"name": "Sweepstake: Create",
+			"disabled": true,
+			"credentials": {
+				"sweeppeaApi": {
+					"id": "jb5NylJkKLXtqB9M",
+					"name": "Sweeppea account"
+				}
+			}
+		},
+		{
+			"parameters": {
+				"resource": "sweepstake",
+				"operation": "clone",
+				"cloneSourceHandler": "AGENTPRUEBA",
+				"cloneNewHandler": "=N8NCLONE{{ $now.toFormat('HHmmss') }}",
+				"cloneNewName": "N8N Showcase Clone",
+				"cloneStartDate": "2027-01-01",
+				"cloneEndDate": "2027-12-31",
+				"cloneStartTime": "00:00",
+				"cloneEndTime": "23:59"
+			},
+			"type": "CUSTOM.sweeppea",
+			"typeVersion": 1,
+			"position": [1180, -540],
+			"id": "00000000-0000-0000-0000-000000000116",
+			"name": "Sweepstake: Clone",
+			"disabled": true,
+			"credentials": {
+				"sweeppeaApi": {
+					"id": "jb5NylJkKLXtqB9M",
+					"name": "Sweeppea account"
+				}
+			}
+		},
+
+		{
+			"parameters": {
+				"content": "### Lane 2 — Participant (read-only, 4 ops)\n\nGet Form Fields → Count → Get Many (paginated) → Get (by email)",
+				"height": 130,
+				"width": 1000,
+				"color": 6
+			},
+			"type": "n8n-nodes-base.stickyNote",
+			"typeVersion": 1,
+			"position": [-180, -360],
+			"id": "00000000-0000-0000-0000-000000000200",
+			"name": "Sticky: Participant Read Lane"
+		},
+		{
+			"parameters": {
+				"resource": "participant",
+				"operation": "getFormFields",
+				"sweepstakesToken": "={{ $('Set Config').first().json.sweepstakesToken }}"
+			},
+			"type": "CUSTOM.sweeppea",
+			"typeVersion": 1,
+			"position": [-140, -200],
+			"id": "00000000-0000-0000-0000-000000000210",
+			"name": "Participant: Get Form Fields",
+			"credentials": {
+				"sweeppeaApi": {
+					"id": "jb5NylJkKLXtqB9M",
+					"name": "Sweeppea account"
+				}
+			}
+		},
+		{
+			"parameters": {
+				"resource": "participant",
+				"operation": "count",
+				"sweepstakesToken": "={{ $('Set Config').first().json.sweepstakesToken }}",
+				"countFilterType": "all"
+			},
+			"type": "CUSTOM.sweeppea",
+			"typeVersion": 1,
+			"position": [80, -200],
+			"id": "00000000-0000-0000-0000-000000000211",
+			"name": "Participant: Count",
+			"credentials": {
+				"sweeppeaApi": {
+					"id": "jb5NylJkKLXtqB9M",
+					"name": "Sweeppea account"
+				}
+			}
+		},
+		{
+			"parameters": {
+				"resource": "participant",
+				"operation": "getMany",
+				"sweepstakesToken": "={{ $('Set Config').first().json.sweepstakesToken }}",
+				"returnAll": false,
+				"limit": 10
+			},
+			"type": "CUSTOM.sweeppea",
+			"typeVersion": 1,
+			"position": [300, -200],
+			"id": "00000000-0000-0000-0000-000000000212",
+			"name": "Participant: Get Many",
+			"credentials": {
+				"sweeppeaApi": {
+					"id": "jb5NylJkKLXtqB9M",
+					"name": "Sweeppea account"
+				}
+			}
+		},
+		{
+			"parameters": {
+				"resource": "participant",
+				"operation": "get",
+				"sweepstakesToken": "={{ $('Set Config').first().json.sweepstakesToken }}",
+				"searchBy": "keyEmail",
+				"getKeyEmail": "test@sweeppea.com"
+			},
+			"type": "CUSTOM.sweeppea",
+			"typeVersion": 1,
+			"position": [520, -200],
+			"id": "00000000-0000-0000-0000-000000000213",
+			"name": "Participant: Get (by email)",
+			"credentials": {
+				"sweeppeaApi": {
+					"id": "jb5NylJkKLXtqB9M",
+					"name": "Sweeppea account"
+				}
+			}
+		},
+
+		{
+			"parameters": {
+				"content": "### Lane 3 — Participant CRUD round-trip (3 ops)\n\nCreate → Get (by email) → Delete (extracts ParticipantToken from Get).\n\nSe limpia solo. Cada run usa email único `n8n-demo-{ts}@example.com`.",
+				"height": 130,
+				"width": 800,
+				"color": 6
+			},
+			"type": "n8n-nodes-base.stickyNote",
+			"typeVersion": 1,
+			"position": [-180, -60],
+			"id": "00000000-0000-0000-0000-000000000300",
+			"name": "Sticky: Participant CRUD Lane"
+		},
+		{
+			"parameters": {
+				"resource": "participant",
+				"operation": "create",
+				"sweepstakesToken": "={{ $('Set Config').first().json.sweepstakesToken }}"
+			},
+			"type": "CUSTOM.sweeppea",
+			"typeVersion": 1,
+			"position": [-140, 100],
+			"id": "00000000-0000-0000-0000-000000000310",
+			"name": "Participant: Create",
+			"credentials": {
+				"sweeppeaApi": {
+					"id": "jb5NylJkKLXtqB9M",
+					"name": "Sweeppea account"
+				}
+			}
+		},
+		{
+			"parameters": {
+				"resource": "participant",
+				"operation": "get",
+				"sweepstakesToken": "={{ $('Set Config').first().json.sweepstakesToken }}",
+				"searchBy": "keyEmail",
+				"getKeyEmail": "={{ $('Set Config').first().json.testEmail }}"
+			},
+			"type": "CUSTOM.sweeppea",
+			"typeVersion": 1,
+			"position": [80, 100],
+			"id": "00000000-0000-0000-0000-000000000311",
+			"name": "Participant: Get (just created)",
+			"credentials": {
+				"sweeppeaApi": {
+					"id": "jb5NylJkKLXtqB9M",
+					"name": "Sweeppea account"
+				}
+			}
+		},
+		{
+			"parameters": {
+				"resource": "participant",
+				"operation": "delete",
+				"sweepstakesToken": "={{ $('Set Config').first().json.sweepstakesToken }}",
+				"deleteParticipantToken": "={{ $json.Data.Entries[0].ParticipantToken }}"
+			},
+			"type": "CUSTOM.sweeppea",
+			"typeVersion": 1,
+			"position": [300, 100],
+			"id": "00000000-0000-0000-0000-000000000312",
+			"name": "Participant: Delete",
+			"credentials": {
+				"sweeppeaApi": {
+					"id": "jb5NylJkKLXtqB9M",
+					"name": "Sweeppea account"
+				}
+			}
+		},
+
+		{
+			"parameters": {
+				"content": "### Lane 4 — Winner (2 ops)\n\nGet Many (read-only).\n\n**Disabled**: Draw (marca un ganador real en el sweep).",
+				"height": 130,
+				"width": 600,
+				"color": 5
+			},
+			"type": "n8n-nodes-base.stickyNote",
+			"typeVersion": 1,
+			"position": [-180, 240],
+			"id": "00000000-0000-0000-0000-000000000400",
+			"name": "Sticky: Winner Lane"
+		},
+		{
+			"parameters": {
+				"resource": "winner",
+				"operation": "getMany",
+				"sweepstakesToken": "={{ $('Set Config').first().json.sweepstakesToken }}",
+				"returnAll": false,
+				"limit": 10
+			},
+			"type": "CUSTOM.sweeppea",
+			"typeVersion": 1,
+			"position": [-140, 400],
+			"id": "00000000-0000-0000-0000-000000000410",
+			"name": "Winner: Get Many",
+			"credentials": {
+				"sweeppeaApi": {
+					"id": "jb5NylJkKLXtqB9M",
+					"name": "Sweeppea account"
+				}
+			}
+		},
+		{
+			"parameters": {
+				"resource": "winner",
+				"operation": "draw",
+				"sweepstakesToken": "={{ $('Set Config').first().json.sweepstakesToken }}",
+				"howManyWinnersToPick": 1
+			},
+			"type": "CUSTOM.sweeppea",
+			"typeVersion": 1,
+			"position": [80, 400],
+			"id": "00000000-0000-0000-0000-000000000411",
+			"name": "Winner: Draw",
+			"disabled": true,
+			"credentials": {
+				"sweeppeaApi": {
+					"id": "jb5NylJkKLXtqB9M",
+					"name": "Sweeppea account"
+				}
+			}
+		},
+
+		{
+			"parameters": {
+				"content": "### Lane 5 — Rule (1 op)\n\n**Disabled**: Create (agrega un rule persistente al sweep).",
+				"height": 130,
+				"width": 400,
+				"color": 5
+			},
+			"type": "n8n-nodes-base.stickyNote",
+			"typeVersion": 1,
+			"position": [-180, 540],
+			"id": "00000000-0000-0000-0000-000000000500",
+			"name": "Sticky: Rule Lane"
+		},
+		{
+			"parameters": {
+				"resource": "rule",
+				"operation": "create",
+				"sweepstakesToken": "={{ $('Set Config').first().json.sweepstakesToken }}",
+				"ruleTitle": "N8N Showcase Rule",
+				"ruleDocumentContent": "<h1>Official Rules — N8N Showcase</h1><p>This is a sample HTML rules document generated by the n8n-nodes-sweeppea showcase workflow. Safe to delete.</p>"
+			},
+			"type": "CUSTOM.sweeppea",
+			"typeVersion": 1,
+			"position": [-140, 700],
+			"id": "00000000-0000-0000-0000-000000000510",
+			"name": "Rule: Create",
+			"disabled": true,
+			"credentials": {
+				"sweeppeaApi": {
+					"id": "jb5NylJkKLXtqB9M",
+					"name": "Sweeppea account"
+				}
+			}
+		}
+	],
+	"connections": {
+		"When clicking 'Execute workflow'": {
+			"main": [[{"node": "Set Config", "type": "main", "index": 0}]]
+		},
+		"Set Config": {
+			"main": [[
+				{"node": "Sweepstake: Get Many", "type": "main", "index": 0},
+				{"node": "Participant: Get Form Fields", "type": "main", "index": 0},
+				{"node": "Participant: Create", "type": "main", "index": 0},
+				{"node": "Winner: Get Many", "type": "main", "index": 0},
+				{"node": "Rule: Create", "type": "main", "index": 0}
+			]]
+		},
+		"Sweepstake: Get Many": {
+			"main": [[{"node": "Sweepstake: Pause", "type": "main", "index": 0}]]
+		},
+		"Sweepstake: Pause": {
+			"main": [[{"node": "Sweepstake: Unpause", "type": "main", "index": 0}]]
+		},
+		"Sweepstake: Unpause": {
+			"main": [[{"node": "Sweepstake: Update (rename)", "type": "main", "index": 0}]]
+		},
+		"Sweepstake: Update (rename)": {
+			"main": [[{"node": "Sweepstake: Update (revert)", "type": "main", "index": 0}]]
+		},
+		"Sweepstake: Update (revert)": {
+			"main": [[{"node": "Sweepstake: Create", "type": "main", "index": 0}]]
+		},
+		"Sweepstake: Create": {
+			"main": [[{"node": "Sweepstake: Clone", "type": "main", "index": 0}]]
+		},
+		"Participant: Get Form Fields": {
+			"main": [[{"node": "Participant: Count", "type": "main", "index": 0}]]
+		},
+		"Participant: Count": {
+			"main": [[{"node": "Participant: Get Many", "type": "main", "index": 0}]]
+		},
+		"Participant: Get Many": {
+			"main": [[{"node": "Participant: Get (by email)", "type": "main", "index": 0}]]
+		},
+		"Participant: Create": {
+			"main": [[{"node": "Participant: Get (just created)", "type": "main", "index": 0}]]
+		},
+		"Participant: Get (just created)": {
+			"main": [[{"node": "Participant: Delete", "type": "main", "index": 0}]]
+		},
+		"Winner: Get Many": {
+			"main": [[{"node": "Winner: Draw", "type": "main", "index": 0}]]
+		}
+	},
+	"settings": {
+		"executionOrder": "v1"
+	},
+	"pinData": {},
+	"meta": {
+		"templateCredsSetupCompleted": true
+	},
+	"tags": []
+}

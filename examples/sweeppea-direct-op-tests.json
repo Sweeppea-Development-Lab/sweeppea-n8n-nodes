@@ -1,0 +1,118 @@
+{
+	"name": "Sweeppea v0.2.0 — Direct Op Tests (Read-Only)",
+	"nodes": [
+		{
+			"parameters": {},
+			"type": "n8n-nodes-base.manualTrigger",
+			"typeVersion": 1,
+			"position": [-200, 0],
+			"id": "11111111-1111-1111-1111-111111111111",
+			"name": "When clicking 'Execute workflow'"
+		},
+		{
+			"parameters": {
+				"resource": "sweepstake",
+				"operation": "getMany"
+			},
+			"type": "n8n-nodes-sweeppea.sweeppea",
+			"typeVersion": 1,
+			"position": [120, -240],
+			"id": "22222222-2222-2222-2222-222222222222",
+			"name": "Sweepstake: Get Many"
+		},
+		{
+			"parameters": {
+				"resource": "participant",
+				"operation": "getFormFields",
+				"sweepstakesToken": "512e77fa-3d11-4ebe-95ee-031d7ddfa593"
+			},
+			"type": "n8n-nodes-sweeppea.sweeppea",
+			"typeVersion": 1,
+			"position": [120, -120],
+			"id": "33333333-3333-3333-3333-333333333333",
+			"name": "Participant: Get Form Fields"
+		},
+		{
+			"parameters": {
+				"resource": "participant",
+				"operation": "count",
+				"sweepstakesToken": "512e77fa-3d11-4ebe-95ee-031d7ddfa593",
+				"countFilterType": "all"
+			},
+			"type": "n8n-nodes-sweeppea.sweeppea",
+			"typeVersion": 1,
+			"position": [120, 0],
+			"id": "44444444-4444-4444-4444-444444444444",
+			"name": "Participant: Count"
+		},
+		{
+			"parameters": {
+				"resource": "participant",
+				"operation": "getMany",
+				"sweepstakesToken": "512e77fa-3d11-4ebe-95ee-031d7ddfa593",
+				"returnAll": false,
+				"limit": 5
+			},
+			"type": "n8n-nodes-sweeppea.sweeppea",
+			"typeVersion": 1,
+			"position": [120, 120],
+			"id": "55555555-5555-5555-5555-555555555555",
+			"name": "Participant: Get Many (5)"
+		},
+		{
+			"parameters": {
+				"resource": "winner",
+				"operation": "getMany",
+				"sweepstakesToken": "512e77fa-3d11-4ebe-95ee-031d7ddfa593",
+				"returnAll": false,
+				"limit": 5
+			},
+			"type": "n8n-nodes-sweeppea.sweeppea",
+			"typeVersion": 1,
+			"position": [120, 240],
+			"id": "66666666-6666-6666-6666-666666666666",
+			"name": "Winner: Get Many (5)"
+		}
+	],
+	"connections": {
+		"When clicking 'Execute workflow'": {
+			"main": [
+				[
+					{
+						"node": "Sweepstake: Get Many",
+						"type": "main",
+						"index": 0
+					},
+					{
+						"node": "Participant: Get Form Fields",
+						"type": "main",
+						"index": 0
+					},
+					{
+						"node": "Participant: Count",
+						"type": "main",
+						"index": 0
+					},
+					{
+						"node": "Participant: Get Many (5)",
+						"type": "main",
+						"index": 0
+					},
+					{
+						"node": "Winner: Get Many (5)",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		}
+	},
+	"settings": {
+		"executionOrder": "v1"
+	},
+	"pinData": {},
+	"meta": {
+		"templateCredsSetupCompleted": true
+	},
+	"tags": []
+}
