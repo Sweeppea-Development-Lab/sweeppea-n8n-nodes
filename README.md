@@ -202,6 +202,43 @@ An advanced workflow that automatically adapts to any sweepstake configuration:
 
 > The dynamic workflow automatically adapts to any sweepstake configuration, making it ideal for use across multiple campaigns with different field requirements.
 
+### 3. v0.2.0 showcase — all 15 operations on one canvas
+
+**File:** `sweeppea-showcase.json`
+**Explainer:** [`sweeppea-showcase.md`](examples/sweeppea-showcase.md)
+
+End-to-end demo that exercises every operation the node exposes, grouped by resource into 5 colour-coded lanes. Designed for screenshots, code review, and local QA.
+
+![Showcase full canvas](examples/sweeppea-showcase-canvas-full.png)
+
+A `Manual Trigger` feeds a `Set Config` node that stores the test `sweepstakesToken`, a per-execution unique email built from `$execution.id`, and the demo participant data. From there the flow fans out into:
+
+- **Lane 1 — Sweepstake**: Get Many → Pause → Unpause → Update (rename) → Update (revert). Create and Clone are present but disabled (would persist data).
+- **Lane 2 — Participant (read-only)**: Get Form Fields → Count → Get Many → Get (by email).
+- **Lane 3 — Participant CRUD round-trip**: Create → Get (just created) → Delete. The chain cleans up after itself.
+- **Lane 4 — Winner**: Get Many. Draw is disabled (would mark a real winner).
+- **Lane 5 — Rule**: Create is disabled (would persist a rules document).
+
+Top half of the canvas (Sweepstake + Participant read-only lanes):
+
+![Showcase top half](examples/sweeppea-showcase-canvas-top.png)
+
+Bottom half (CRUD round-trip, Winner, Rule):
+
+![Showcase bottom half](examples/sweeppea-showcase-canvas-bottom.png)
+
+After a successful run with `Participant: Delete` toggled off, the test participants persist in the Sweeppea dashboard — each row uses the `n8n-demo-<execution.id>@example.com` pattern:
+
+![Participants persisted in Sweeppea App](examples/sweeppea-showcase-dashboard.png)
+
+**How to use:**
+
+1. Import the JSON into your n8n instance (paste into the canvas or use the menu).
+2. Re-bind the Sweeppea API credential on any one node — n8n will offer to apply it to the rest.
+3. Replace the `sweepstakesToken` value in `Set Config` with one of your sweepstakes.
+4. Click **Execute workflow**. A clean run lights 11 nodes green; the 4 disabled nodes stay grey.
+5. To exercise a disabled op, click its toggle and execute again. Clean up the artefacts it creates from the Sweeppea dashboard.
+
 ## Resources
 
 - [n8n community nodes documentation](https://docs.n8n.io/integrations/community-nodes/)
