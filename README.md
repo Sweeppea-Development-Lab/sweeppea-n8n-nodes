@@ -237,6 +237,63 @@ After a successful run, every Sweeppea API call is verifiable in the Sweeppea da
 4. Click **Execute workflow**. A clean run lights 11 nodes green; the 4 disabled nodes stay grey.
 5. To exercise a disabled op, click its toggle and execute again. Clean up the artefacts it creates from the Sweeppea dashboard.
 
+### 4. Smart Registration v2 — conversational entry with live count
+
+**File:** `sweeppea-smart-registration-v2.json`
+
+Evolution of the v0.1 dynamic-form pattern with two new touches from v0.2.0:
+
+- **`Participant: Count`** runs before the AI conversation, so the bot can tell the user *"you'll be participant #N+1 once registered"* in real time.
+- **`Participant: Get Form Fields`** still drives the dynamic field collection, but the AI Agent's system prompt is rebuilt every turn with the current count baked in.
+
+Flow:
+
+```
+Chat → Count → Get Form Fields → Build Dynamic Prompt → AI Agent → Switch
+                                                                      ├─ ready → Transform → Register → Reply (success/duplicate/error)
+                                                                      └─ continue → Reply (next question)
+```
+
+The AI Agent collects required fields one at a time, validates email/phone, and emits a JSON action when ready. A Code node maps that JSON onto the `participant:create` body shape exactly the way the v0.1 example did, so existing prompt engineering carries over.
+
+### 5. Customer Self-Service — read-only chatbot with Sweeppea tools
+
+**File:** `sweeppea-customer-self-service.json`
+
+A chat agent for **participants** of an existing sweepstake. The AI Agent has three Sweeppea nodes attached as tools (all read-only, no destructive ops):
+
+- **check_entry** — `Participant: Get` by email (answers *"am I in?"*)
+- **entry_count** — `Participant: Count` (answers *"how many people entered?"*)
+- **winners_list** — `Winner: Get Many` (answers *"who won?"*)
+
+Each tool uses n8n's `$fromAI()` for parameters the agent should fill (e.g. the email for `check_entry`), with the `sweepstakesToken` hard-coded since a self-service bot serves a single sweep.
+
+> Use a model strong at tool-calling (GPT-4o, Claude Sonnet, Gemini 2.5 Pro). Smaller open-weight models may loop without invoking tools.
+
+### 6. Admin Command Bot — destructive ops by chat ⚠️
+
+**File:** `sweeppea-admin-command-bot.json`
+
+For the sweepstake **owner**, not for participants. Five Sweeppea tools attached, including destructive ones:
+
+- **list_sweeps** — `Sweepstake: Get Many` (no params, safe)
+- **pause_sweep** / **unpause_sweep** — `Sweepstake: Pause` / `Unpause`
+- **rename_sweep** — `Sweepstake: Update` (name only)
+- **draw_winners** — `Winner: Draw` (DESTRUCTIVE, marks real winners)
+
+The system prompt instructs the agent to confirm before any destructive action ("Are you sure you want to draw 3 winners from sweep X?") and to refer to sweeps by their handler/name rather than just the token. Run it against a test sweepstake until you trust the conversation flow.
+
+### Dev-mode note
+
+If you're testing one of these workflows under `n8n-node dev` (the local development mode of `@n8n/node-cli`), n8n registers the package under the `CUSTOM.` namespace instead of `n8n-nodes-sweeppea.`. After importing, do a find-replace in the workflow JSON:
+
+```
+n8n-nodes-sweeppea.sweeppea     → CUSTOM.sweeppea
+n8n-nodes-sweeppea.sweeppeaTool → CUSTOM.sweeppeaTool
+```
+
+Users who install the node via `npm i n8n-nodes-sweeppea` don't need this — the published types work directly.
+
 ## Resources
 
 - [n8n community nodes documentation](https://docs.n8n.io/integrations/community-nodes/)

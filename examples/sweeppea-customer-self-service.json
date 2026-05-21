@@ -1,0 +1,155 @@
+{
+	"name": "Sweeppea v0.2.0 — Customer Self-Service (chat)",
+	"nodes": [
+		{
+			"parameters": {
+				"content": "## Customer Self-Service Chatbot\n\nRead-only AI Agent for sweepstake participants. Three Sweeppea tools attached:\n\n- **Check My Entry** — `Participant: Get` by email\n- **Entry Count** — `Participant: Count` for the sweep\n- **Winners List** — `Winner: Get Many` (last 10)\n\nThe agent picks the right tool based on the user's question.\n\n**Setup**: replace `sweepstakesToken` in the three tool nodes with yours; bind OpenAI credential on the chat model. Use a model strong at tool-calling (gpt-4o, claude-sonnet, gemini-2.5-pro).",
+				"height": 320,
+				"width": 460,
+				"color": 4
+			},
+			"type": "n8n-nodes-base.stickyNote",
+			"typeVersion": 1,
+			"position": [-400, -20],
+			"id": "20000000-0000-0000-0000-000000000001",
+			"name": "Sticky: README"
+		},
+		{
+			"parameters": {
+				"public": true,
+				"options": {}
+			},
+			"type": "@n8n/n8n-nodes-langchain.chatTrigger",
+			"typeVersion": 1.3,
+			"position": [-400, 400],
+			"id": "20000000-0000-0000-0000-000000000010",
+			"name": "When chat message received",
+			"webhookId": "22222222-2222-2222-2222-222222222222"
+		},
+		{
+			"parameters": {
+				"promptType": "auto",
+				"options": {
+					"systemMessage": "You are a friendly assistant for participants of a Sweeppea sweepstake.\n\nYou have three tools:\n- **check_entry** (Participant: Get) — verify if a given email is registered.\n- **entry_count** (Participant: Count) — return how many participants are in the sweep.\n- **winners_list** (Winner: Get Many) — list previously drawn winners.\n\nGuidelines:\n- For 'am I in?' or 'did I register?' questions, ask for the user's email and use check_entry.\n- For 'how many people are entered?' use entry_count.\n- For 'who won?' or 'show winners' use winners_list.\n- Be brief and friendly. If a tool returns no data, say so politely.\n- Never invent emails, counts, or winners. Always call the tool first."
+				}
+			},
+			"type": "@n8n/n8n-nodes-langchain.agent",
+			"typeVersion": 2.2,
+			"position": [-160, 400],
+			"id": "20000000-0000-0000-0000-000000000020",
+			"name": "AI Agent"
+		},
+		{
+			"parameters": {
+				"options": {}
+			},
+			"type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+			"typeVersion": 1.2,
+			"position": [-280, 620],
+			"id": "20000000-0000-0000-0000-000000000030",
+			"name": "OpenAI Chat Model"
+		},
+		{
+			"parameters": {
+				"sessionIdType": "customKey",
+				"sessionKey": "={{ $('When chat message received').first().json.sessionId }}",
+				"contextWindowLength": 10
+			},
+			"type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+			"typeVersion": 1.3,
+			"position": [-100, 620],
+			"id": "20000000-0000-0000-0000-000000000040",
+			"name": "Simple Memory"
+		},
+		{
+			"parameters": {
+				"toolDescription": "Check whether a participant with the given email is registered in this sweepstake.",
+				"resource": "participant",
+				"operation": "get",
+				"sweepstakesToken": "512e77fa-3d11-4ebe-95ee-031d7ddfa593",
+				"searchBy": "keyEmail",
+				"getKeyEmail": "={{ $fromAI('email', 'The participant email to look up', 'string') }}"
+			},
+			"type": "n8n-nodes-sweeppea.sweeppeaTool",
+			"typeVersion": 1,
+			"position": [80, 620],
+			"id": "20000000-0000-0000-0000-000000000050",
+			"name": "Tool: check_entry",
+			"credentials": {
+				"sweeppeaApi": {
+					"id": "jb5NylJkKLXtqB9M",
+					"name": "Sweeppea account"
+				}
+			}
+		},
+		{
+			"parameters": {
+				"toolDescription": "Return the total number of participants currently registered in this sweepstake.",
+				"resource": "participant",
+				"operation": "count",
+				"sweepstakesToken": "512e77fa-3d11-4ebe-95ee-031d7ddfa593",
+				"countFilterType": "all"
+			},
+			"type": "n8n-nodes-sweeppea.sweeppeaTool",
+			"typeVersion": 1,
+			"position": [260, 620],
+			"id": "20000000-0000-0000-0000-000000000060",
+			"name": "Tool: entry_count",
+			"credentials": {
+				"sweeppeaApi": {
+					"id": "jb5NylJkKLXtqB9M",
+					"name": "Sweeppea account"
+				}
+			}
+		},
+		{
+			"parameters": {
+				"toolDescription": "List the most recent winners drawn from this sweepstake (up to 10).",
+				"resource": "winner",
+				"operation": "getMany",
+				"sweepstakesToken": "512e77fa-3d11-4ebe-95ee-031d7ddfa593",
+				"returnAll": false,
+				"limit": 10
+			},
+			"type": "n8n-nodes-sweeppea.sweeppeaTool",
+			"typeVersion": 1,
+			"position": [440, 620],
+			"id": "20000000-0000-0000-0000-000000000070",
+			"name": "Tool: winners_list",
+			"credentials": {
+				"sweeppeaApi": {
+					"id": "jb5NylJkKLXtqB9M",
+					"name": "Sweeppea account"
+				}
+			}
+		}
+	],
+	"connections": {
+		"When chat message received": {
+			"main": [[{"node": "AI Agent", "type": "main", "index": 0}]]
+		},
+		"OpenAI Chat Model": {
+			"ai_languageModel": [[{"node": "AI Agent", "type": "ai_languageModel", "index": 0}]]
+		},
+		"Simple Memory": {
+			"ai_memory": [[{"node": "AI Agent", "type": "ai_memory", "index": 0}]]
+		},
+		"Tool: check_entry": {
+			"ai_tool": [[{"node": "AI Agent", "type": "ai_tool", "index": 0}]]
+		},
+		"Tool: entry_count": {
+			"ai_tool": [[{"node": "AI Agent", "type": "ai_tool", "index": 0}]]
+		},
+		"Tool: winners_list": {
+			"ai_tool": [[{"node": "AI Agent", "type": "ai_tool", "index": 0}]]
+		}
+	},
+	"settings": {
+		"executionOrder": "v1"
+	},
+	"pinData": {},
+	"meta": {
+		"templateCredsSetupCompleted": true
+	},
+	"tags": []
+}

@@ -1,0 +1,197 @@
+{
+	"name": "Sweeppea v0.2.0 — Admin Command Bot (chat)",
+	"nodes": [
+		{
+			"parameters": {
+				"content": "## Admin Command Bot ⚠️\n\nFor the **sweepstake owner**, not for participants. Five Sweeppea tools attached to an AI Agent so you can run admin actions by talking to it:\n\n- `list_sweeps` — Sweepstake: Get Many\n- `pause_sweep` — Sweepstake: Pause\n- `unpause_sweep` — Sweepstake: Unpause\n- `rename_sweep` — Sweepstake: Update (name)\n- `draw_winners` — Winner: Draw (DESTRUCTIVE, marks real winners)\n\n**Use on a test sweepstake** until you trust the bot. Bind OpenAI cred on the chat model; use a model strong at tool-calling.",
+				"height": 350,
+				"width": 460,
+				"color": 1
+			},
+			"type": "n8n-nodes-base.stickyNote",
+			"typeVersion": 1,
+			"position": [-400, -30],
+			"id": "30000000-0000-0000-0000-000000000001",
+			"name": "Sticky: README"
+		},
+		{
+			"parameters": {
+				"public": true,
+				"options": {}
+			},
+			"type": "@n8n/n8n-nodes-langchain.chatTrigger",
+			"typeVersion": 1.3,
+			"position": [-400, 400],
+			"id": "30000000-0000-0000-0000-000000000010",
+			"name": "When chat message received",
+			"webhookId": "33333333-3333-3333-3333-333333333333"
+		},
+		{
+			"parameters": {
+				"promptType": "auto",
+				"options": {
+					"systemMessage": "You are an admin assistant for a Sweeppea account owner.\n\nYou have five tools:\n- **list_sweeps** — list every sweepstake on the account (no parameters).\n- **pause_sweep** — pause a sweepstake by token.\n- **unpause_sweep** — re-activate a paused sweepstake by token.\n- **rename_sweep** — change a sweepstake's display name.\n- **draw_winners** — draw N winners from a sweepstake.\n\nGuidelines:\n- If the user does not provide a sweepstakesToken, call list_sweeps first and ask them to pick by handler or name.\n- For destructive actions (pause, unpause, rename, draw_winners), CONFIRM with the user before executing. Ask 'Are you sure you want to draw 3 winners from sweep X?' and only proceed on an explicit yes.\n- After each tool call, report the API response in plain English (don't dump JSON).\n- Be precise about which sweepstake you're acting on; reference it by handler or name, never just by token."
+				}
+			},
+			"type": "@n8n/n8n-nodes-langchain.agent",
+			"typeVersion": 2.2,
+			"position": [-160, 400],
+			"id": "30000000-0000-0000-0000-000000000020",
+			"name": "AI Agent"
+		},
+		{
+			"parameters": {
+				"options": {}
+			},
+			"type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+			"typeVersion": 1.2,
+			"position": [-320, 620],
+			"id": "30000000-0000-0000-0000-000000000030",
+			"name": "OpenAI Chat Model"
+		},
+		{
+			"parameters": {
+				"sessionIdType": "customKey",
+				"sessionKey": "={{ $('When chat message received').first().json.sessionId }}",
+				"contextWindowLength": 16
+			},
+			"type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+			"typeVersion": 1.3,
+			"position": [-160, 620],
+			"id": "30000000-0000-0000-0000-000000000040",
+			"name": "Simple Memory"
+		},
+		{
+			"parameters": {
+				"toolDescription": "List every sweepstake on the authenticated Sweeppea account. Returns name, handler, token, status (active/paused), and dates.",
+				"resource": "sweepstake",
+				"operation": "getMany"
+			},
+			"type": "n8n-nodes-sweeppea.sweeppeaTool",
+			"typeVersion": 1,
+			"position": [0, 620],
+			"id": "30000000-0000-0000-0000-000000000050",
+			"name": "Tool: list_sweeps",
+			"credentials": {
+				"sweeppeaApi": {
+					"id": "jb5NylJkKLXtqB9M",
+					"name": "Sweeppea account"
+				}
+			}
+		},
+		{
+			"parameters": {
+				"toolDescription": "Pause a sweepstake so it stops accepting entries. Requires the SweepstakesToken (UUID v4).",
+				"resource": "sweepstake",
+				"operation": "pause",
+				"sweepstakesToken": "={{ $fromAI('sweepstakesToken', 'The UUID v4 token of the sweepstake to pause', 'string') }}"
+			},
+			"type": "n8n-nodes-sweeppea.sweeppeaTool",
+			"typeVersion": 1,
+			"position": [160, 620],
+			"id": "30000000-0000-0000-0000-000000000060",
+			"name": "Tool: pause_sweep",
+			"credentials": {
+				"sweeppeaApi": {
+					"id": "jb5NylJkKLXtqB9M",
+					"name": "Sweeppea account"
+				}
+			}
+		},
+		{
+			"parameters": {
+				"toolDescription": "Re-activate a paused sweepstake so it accepts entries again. Requires the SweepstakesToken (UUID v4).",
+				"resource": "sweepstake",
+				"operation": "unpause",
+				"sweepstakesToken": "={{ $fromAI('sweepstakesToken', 'The UUID v4 token of the sweepstake to unpause', 'string') }}"
+			},
+			"type": "n8n-nodes-sweeppea.sweeppeaTool",
+			"typeVersion": 1,
+			"position": [320, 620],
+			"id": "30000000-0000-0000-0000-000000000070",
+			"name": "Tool: unpause_sweep",
+			"credentials": {
+				"sweeppeaApi": {
+					"id": "jb5NylJkKLXtqB9M",
+					"name": "Sweeppea account"
+				}
+			}
+		},
+		{
+			"parameters": {
+				"toolDescription": "Rename a sweepstake. Requires the SweepstakesToken (UUID v4) and the new name.",
+				"resource": "sweepstake",
+				"operation": "update",
+				"sweepstakesToken": "={{ $fromAI('sweepstakesToken', 'The UUID v4 token of the sweepstake to rename', 'string') }}",
+				"updateFields": {
+					"SweepstakesName": "={{ $fromAI('newName', 'The new display name for the sweepstake (max 200 chars)', 'string') }}"
+				}
+			},
+			"type": "n8n-nodes-sweeppea.sweeppeaTool",
+			"typeVersion": 1,
+			"position": [480, 620],
+			"id": "30000000-0000-0000-0000-000000000080",
+			"name": "Tool: rename_sweep",
+			"credentials": {
+				"sweeppeaApi": {
+					"id": "jb5NylJkKLXtqB9M",
+					"name": "Sweeppea account"
+				}
+			}
+		},
+		{
+			"parameters": {
+				"toolDescription": "Draw N random winners from a sweepstake. DESTRUCTIVE: marks real participants as winners. Confirm with the user first. Requires SweepstakesToken and howManyWinnersToPick.",
+				"resource": "winner",
+				"operation": "draw",
+				"sweepstakesToken": "={{ $fromAI('sweepstakesToken', 'The UUID v4 token of the sweepstake to draw winners from', 'string') }}",
+				"howManyWinnersToPick": "={{ $fromAI('howMany', 'Number of winners to draw (positive integer)', 'number') }}"
+			},
+			"type": "n8n-nodes-sweeppea.sweeppeaTool",
+			"typeVersion": 1,
+			"position": [640, 620],
+			"id": "30000000-0000-0000-0000-000000000090",
+			"name": "Tool: draw_winners",
+			"credentials": {
+				"sweeppeaApi": {
+					"id": "jb5NylJkKLXtqB9M",
+					"name": "Sweeppea account"
+				}
+			}
+		}
+	],
+	"connections": {
+		"When chat message received": {
+			"main": [[{"node": "AI Agent", "type": "main", "index": 0}]]
+		},
+		"OpenAI Chat Model": {
+			"ai_languageModel": [[{"node": "AI Agent", "type": "ai_languageModel", "index": 0}]]
+		},
+		"Simple Memory": {
+			"ai_memory": [[{"node": "AI Agent", "type": "ai_memory", "index": 0}]]
+		},
+		"Tool: list_sweeps": {
+			"ai_tool": [[{"node": "AI Agent", "type": "ai_tool", "index": 0}]]
+		},
+		"Tool: pause_sweep": {
+			"ai_tool": [[{"node": "AI Agent", "type": "ai_tool", "index": 0}]]
+		},
+		"Tool: unpause_sweep": {
+			"ai_tool": [[{"node": "AI Agent", "type": "ai_tool", "index": 0}]]
+		},
+		"Tool: rename_sweep": {
+			"ai_tool": [[{"node": "AI Agent", "type": "ai_tool", "index": 0}]]
+		},
+		"Tool: draw_winners": {
+			"ai_tool": [[{"node": "AI Agent", "type": "ai_tool", "index": 0}]]
+		}
+	},
+	"settings": {
+		"executionOrder": "v1"
+	},
+	"pinData": {},
+	"meta": {
+		"templateCredsSetupCompleted": true
+	},
+	"tags": []
+}
