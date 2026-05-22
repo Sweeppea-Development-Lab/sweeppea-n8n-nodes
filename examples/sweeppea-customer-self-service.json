@@ -3,7 +3,7 @@
 	"nodes": [
 		{
 			"parameters": {
-				"content": "## Customer Self-Service Chatbot\n\nRead-only AI Agent for sweepstake participants. Three Sweeppea tools attached:\n\n- **Check My Entry** — `Participant: Get` by email\n- **Entry Count** — `Participant: Count` for the sweep\n- **Winners List** — `Winner: Get Many` (last 10)\n\nThe agent picks the right tool based on the user's question.\n\n**Setup**: replace `sweepstakesToken` in the three tool nodes with yours; bind OpenAI credential on the chat model. Use a model strong at tool-calling (gpt-4o, claude-sonnet, gemini-2.5-pro).",
+				"content": "## Customer Self-Service Chatbot\n\nRead-only AI Agent for sweepstake participants. Three Sweeppea tools attached:\n\n- **Check My Entry** — `Participant: Get` by email\n- **Entry Count** — `Participant: Count` for the sweep\n- **Winners List** — `Winner: Get Many` (last 10)\n\nThe agent picks the right tool based on the user's question.\n\n**Setup**: replace `sweepstakesToken` in the three tool nodes with yours; bind OpenAI credential on the chat model. Use a model strong at tool-calling — tested OK with `qwen/qwen3-next-80b-a3b-instruct` on the NVIDIA free tier; GPT-4o / Claude Sonnet / Gemini 2.5 Pro also recommended.",
 				"height": 320,
 				"width": 460,
 				"color": 4
