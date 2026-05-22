@@ -268,7 +268,7 @@ A chat agent for **participants** of an existing sweepstake. The AI Agent has th
 
 Each tool uses n8n's `$fromAI()` for parameters the agent should fill (e.g. the email for `check_entry`), with the `sweepstakesToken` hard-coded since a self-service bot serves a single sweep.
 
-> Use a model strong at tool-calling (GPT-4o, Claude Sonnet, Gemini 2.5 Pro). Smaller open-weight models may loop without invoking tools.
+> Pick a chat model that reliably handles multi-step tool-calling. Smaller models may loop without ever invoking the tools.
 
 ### 6. Admin Command Bot — destructive ops by chat ⚠️
 

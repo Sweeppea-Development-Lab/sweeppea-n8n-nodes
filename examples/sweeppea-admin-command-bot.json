@@ -3,7 +3,7 @@
 	"nodes": [
 		{
 			"parameters": {
-				"content": "## Admin Command Bot ⚠️\n\nFor the **sweepstake owner**, not for participants. Five Sweeppea tools attached to an AI Agent so you can run admin actions by talking to it:\n\n- `list_sweeps` — Sweepstake: Get Many\n- `pause_sweep` — Sweepstake: Pause\n- `unpause_sweep` — Sweepstake: Unpause\n- `rename_sweep` — Sweepstake: Update (name)\n- `draw_winners` — Winner: Draw (DESTRUCTIVE, marks real winners)\n\n**Use on a test sweepstake** until you trust the bot. Bind OpenAI cred on the chat model; use a model strong at tool-calling — tested with `qwen/qwen3-next-80b-a3b-instruct` on the NVIDIA free tier; GPT-4o / Claude Sonnet / Gemini 2.5 Pro also recommended.",
+				"content": "## Admin Command Bot ⚠️\n\nFor the **sweepstake owner**, not for participants. Five Sweeppea tools attached to an AI Agent so you can run admin actions by talking to it:\n\n- `list_sweeps` — Sweepstake: Get Many\n- `pause_sweep` — Sweepstake: Pause\n- `unpause_sweep` — Sweepstake: Unpause\n- `rename_sweep` — Sweepstake: Update (name)\n- `draw_winners` — Winner: Draw (DESTRUCTIVE, marks real winners)\n\n**Use on a test sweepstake** until you trust the bot. Bind your LLM credential on the chat model and pick whatever model you prefer — anything that reliably handles multi-step tool-calling will work.",
 				"height": 350,
 				"width": 460,
 				"color": 1
