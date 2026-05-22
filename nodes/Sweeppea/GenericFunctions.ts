@@ -76,19 +76,84 @@ export async function sweeppeaApiRequest(
 }
 
 /*
+ * Extracts The API Response Body From A Raw Error Thrown By
+ * `httpRequestWithAuthentication`. n8n 2.x Wraps Errors Differently
+ * Depending On The Underlying Failure (DNS, Connection, 4xx/5xx). Try
+ * The Most Common Locations Until We Find A Non-empty Body
+ */
+function extractApiResponseBody(error: unknown): IDataObject {
+
+	const root = (error ?? {}) as IDataObject;
+
+	/* Direct response.body — older n8n + some helper paths */
+	const direct = (root.response as IDataObject | undefined)?.body;
+
+	/* cause.error — n8n's NodeApiError-like wrapping  */
+	const cause       = (root.cause as IDataObject | undefined);
+	const causeError  = cause?.error as IDataObject | undefined;
+	const causeBody   = (cause?.response as IDataObject | undefined)?.body;
+	const causeData   = cause?.data as IDataObject | undefined;
+
+	/* context — n8n wraps API responses here for newer helpers */
+	const context        = (root.context as IDataObject | undefined);
+	const contextData    = context?.data as IDataObject | undefined;
+	const contextResp    = (context?.response as IDataObject | undefined)?.body as IDataObject | undefined;
+	const contextErrResp = context?.errorResponse as IDataObject | undefined;
+
+	const candidates: Array<unknown> = [
+		direct,
+		causeError,
+		causeBody,
+		causeData,
+		contextData,
+		contextResp,
+		contextErrResp,
+		root.body,
+		root.errorResponse,
+	];
+
+	for (const c of candidates) {
+
+		if (c && typeof c === 'object' && !Array.isArray(c) && Object.keys(c).length > 0) {
+
+			return c as IDataObject;
+		}
+
+		/* Some n8n versions stringify the body; parse if it looks like JSON */
+		if (typeof c === 'string') {
+
+			const trimmed = c.trim();
+
+			if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+
+				try {
+
+					const parsed = JSON.parse(trimmed);
+
+					if (parsed && typeof parsed === 'object') {
+
+						return parsed as IDataObject;
+					}
+
+				} catch {
+					/* Not JSON — skip */
+				}
+			}
+		}
+	}
+
+	return {};
+}
+
+/*
  * Builds The Error Return Data Used When `continueOnFail` Is Enabled
  * Preserves The Original Shape: When The API Returned A Body, We Return It
  * As-Is So Downstream Workflow Logic Can Branch On `Response: false`
  */
 export function buildErrorReturnData(error: JsonObject, itemIndex: number): INodeExecutionData {
 
-	const errorBody = (
-		((error as IDataObject).response as IDataObject | undefined)?.body
-		|| ((error as IDataObject).cause as IDataObject | undefined)?.error
-		|| {}
-	) as IDataObject;
-
-	const hasBody = Object.keys(errorBody).length > 0;
+	const errorBody = extractApiResponseBody(error);
+	const hasBody   = Object.keys(errorBody).length > 0;
 
 	return {
 		json: hasBody
@@ -152,13 +217,8 @@ export function mapApiError(
 
 	if (httpCode === 400) {
 
-		const apiError = (
-			((errorObj as IDataObject).response as IDataObject | undefined)?.body
-			|| ((errorObj as IDataObject).cause as IDataObject | undefined)?.error
-			|| {}
-		) as IDataObject;
-
-		const message = (apiError.Message || apiError.message || 'Validation failed') as string;
+		const apiError = extractApiResponseBody(errorObj);
+		const message  = (apiError.Message || apiError.message || 'Validation failed') as string;
 
 		return new NodeOperationError(node, message, { itemIndex });
 	}
