@@ -303,6 +303,11 @@ Users who install the node via `npm i n8n-nodes-sweeppea` don't need this — th
 
 ## Version history
 
+### 0.2.1
+
+- Adds a GitHub Actions publish workflow (`.github/workflows/publish.yml`) that runs lint + build and publishes to npm with **provenance attestation** on every `v*.*.*` tag push. Required for the n8n Verified Community Nodes program (effective May 1, 2026).
+- No functional changes versus 0.2.0; this release exists so the published package carries a provenance signature.
+
 ### 0.2.0
 
 - New build system based on `@n8n/node-cli` (TypeScript 5.9, ESLint 9, flat config); the legacy regex transpiler is gone.
