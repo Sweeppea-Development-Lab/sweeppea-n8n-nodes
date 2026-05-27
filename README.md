@@ -303,6 +303,13 @@ Users who install the node via `npm i n8n-nodes-sweeppea` don't need this — th
 
 ## Version history
 
+### 0.2.2
+
+- Addresses n8n community-node review feedback (no runtime behavior change):
+  - Removed the dead `requestDefaults` block from the node description. This node is programmatic (`execute()`); every request already resolves its full URL through `sweeppeaApiRequest` → `httpRequestWithAuthentication`, so `requestDefaults` (a declarative-style config) was never consumed.
+  - Codex `nodeVersion` set to the fixed schema value `"1.0"` (it is unrelated to the package's runtime version).
+  - Codex `categories` reduced to supported values only: `Marketing & Content`, `Sales`, `Data & Storage`.
+
 ### 0.2.1
 
 - Adds a GitHub Actions publish workflow (`.github/workflows/publish.yml`) that runs lint + build and publishes to npm with **provenance attestation** on every `v*.*.*` tag push. Required for the n8n Verified Community Nodes program (effective May 1, 2026).
