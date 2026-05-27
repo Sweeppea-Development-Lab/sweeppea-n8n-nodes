@@ -1,27 +1,11 @@
 {
 	"node": "n8n-nodes-sweeppea.sweeppea",
-	"nodeVersion": "0.2.1",
+	"nodeVersion": "1.0",
 	"codexVersion": "1.0",
 	"categories": [
 		"Marketing & Content",
-		"Sales & CRM",
-		"Data & Storage",
-		"Winners",
-		"Sweepstakes",
-		"Contests",
-		"Giveaways",
-		"Promotional Campaigns",
-		"Marketing Automation",
-		"Customer Engagement",
-		"Lead Generation",
-		"User Acquisition",
-		"Prize Management",
-		"Official Rules",
-		"Promotions",
-		"AI Integration",
-		"Chatbots",
-		"APIs",
-		"Webhooks"
+		"Sales",
+		"Data & Storage"
 	],
 	"resources": {
 		"credentialDocumentation": [
