@@ -16,6 +16,7 @@ import {
 	IDataObject,
 	IExecuteFunctions,
 	INodeExecutionData,
+	NodeOperationError,
 } from 'n8n-workflow';
 
 import { sweeppeaApiRequest } from '../GenericFunctions';
@@ -106,8 +107,11 @@ export async function getFormFields(
 
 /*
  * Create Participant Operation
- * Registers A New Participant Using The Input Item's Data Mapped
- * Into The API v3 Body Shape
+ * Registers A New Participant. Reads Top-Level Node Params (Email,
+ * Phone, BonusEntries, CustomFields, Create Options) When Set, And
+ * Falls Back To items[i].json For Backwards Compat With v0.1 Workflows.
+ * The Explicit-Params Path Is What Lets The AI Agent Fill Inputs Via
+ * $fromAI() When This Node Runs As A Tool
  */
 export async function create(
 	this: IExecuteFunctions,
@@ -115,19 +119,64 @@ export async function create(
 ): Promise<INodeExecutionData[]> {
 
 	const items            = this.getInputData();
-	const inputData        = items[i].json as IDataObject;
+	const inputData        = (items[i]?.json ?? {}) as IDataObject;
 	const sweepstakesToken = this.getNodeParameter('sweepstakesToken', i) as string;
 
-	/* Build Request Body For API V3 */
+	/* Read Explicit Node Params (Empty Defaults Mean "Use Input Data") */
+	const explicitEmail       = this.getNodeParameter('KeyEmail', i, '') as string;
+	const explicitPhone       = this.getNodeParameter('KeyPhoneNumber', i, '') as string;
+	const explicitBonus       = this.getNodeParameter('BonusEntries', i, 0) as number;
+	const explicitCustomRaw   = this.getNodeParameter('CustomFields', i, {}) as string | IDataObject;
+	const createOptions       = this.getNodeParameter('createOptions', i, {}) as IDataObject;
+
+	/* Parse Custom Fields JSON (Accepts Object Or String Per n8n json type) */
+	let explicitCustomFields: IDataObject = {};
+
+	if (typeof explicitCustomRaw === 'string') {
+
+		const trimmed = explicitCustomRaw.trim();
+
+		if (trimmed && trimmed !== '{}') {
+
+			try {
+
+				explicitCustomFields = JSON.parse(trimmed) as IDataObject;
+
+			} catch {
+
+				throw new NodeOperationError(
+					this.getNode(),
+					'Custom Fields must be a valid JSON object',
+					{ itemIndex: i },
+				);
+			}
+		}
+
+	} else if (explicitCustomRaw && typeof explicitCustomRaw === 'object') {
+
+		explicitCustomFields = explicitCustomRaw;
+	}
+
+	/* Priority: Explicit Param > Input Item > Default */
+	const inputFields = (inputData.Fields ?? {}) as IDataObject;
+	const KeyEmail = explicitEmail || (inputData.KeyEmail as string) || '';
+	const KeyPhoneNumber = explicitPhone || (inputData.KeyPhoneNumber as string) || '';
+	const BonusEntries = explicitBonus || Number(inputData.BonusEntries ?? 0);
+	const Fields = Object.keys(explicitCustomFields).length > 0
+		? explicitCustomFields
+		: inputFields;
+	const lang = (createOptions.lang as string) || (inputData.lang as string) || 'EN';
+	const source = (createOptions.source as string) || (inputData.source as string) || 'n8n-integration';
+
 	const body: IDataObject = {
-		lang             : inputData.lang || 'EN',
-		source           : inputData.source || 'n8n-integration',
+		lang             : lang,
+		source           : source,
 		sweepstakesToken : sweepstakesToken,
 		entryPageFields  : {
-			KeyPhoneNumber : inputData.KeyPhoneNumber || '',
-			KeyEmail       : inputData.KeyEmail || '',
-			BonusEntries   : inputData.BonusEntries || 0,
-			Fields         : inputData.Fields || {},
+			KeyPhoneNumber : KeyPhoneNumber,
+			KeyEmail       : KeyEmail,
+			BonusEntries   : BonusEntries,
+			Fields         : Fields,
 		},
 	};
 

@@ -114,6 +114,99 @@ export const participantFields: INodeProperties[] = [
 		],
 	},
 
+	/*
+	 * "Create" Operation — Explicit Participant Body Inputs
+	 * Exposed As Top-Level Node Parameters So The AI Agent Can Fill
+	 * Them Via $fromAI() When This Node Runs As A Tool. When Empty,
+	 * Falls Back To items[i].json (v0.1 Compat)
+	 */
+	{
+		displayName    : 'Email',
+		name           : 'KeyEmail',
+		type           : 'string',
+		default        : '',
+		placeholder    : 'name@example.com',
+		displayOptions : {
+			show: {
+				resource  : ['participant'],
+				operation : ['create'],
+			},
+		},
+		description : 'Participant email address. Leave empty to read from the input item\'s "KeyEmail" field.',
+	},
+	{
+		displayName    : 'Phone Number',
+		name           : 'KeyPhoneNumber',
+		type           : 'string',
+		default        : '',
+		placeholder    : '5551234567',
+		displayOptions : {
+			show: {
+				resource  : ['participant'],
+				operation : ['create'],
+			},
+		},
+		description : '10-digit US phone (NANP), no separators. Leave empty to read from the input item\'s "KeyPhoneNumber" field.',
+	},
+	{
+		displayName    : 'Bonus Entries',
+		name           : 'BonusEntries',
+		type           : 'number',
+		default        : 0,
+		typeOptions    : {
+			minValue: 0,
+		},
+		displayOptions : {
+			show: {
+				resource  : ['participant'],
+				operation : ['create'],
+			},
+		},
+		description : 'Number of additional sweepstake entries to award. Defaults to 0; falls back to the input item\'s "BonusEntries" field when zero.',
+	},
+	{
+		displayName    : 'Custom Fields',
+		name           : 'CustomFields',
+		type           : 'json',
+		default        : '{}',
+		displayOptions : {
+			show: {
+				resource  : ['participant'],
+				operation : ['create'],
+			},
+		},
+		description : 'Entry-page custom fields as a JSON object. Keys use underscores (e.g. {"First_Name":"Mauro","Last_Name":"H"}). Leave as "{}" to read from the input item\'s "Fields" field.',
+	},
+	{
+		displayName    : 'Create Options',
+		name           : 'createOptions',
+		type           : 'collection',
+		placeholder    : 'Add Option',
+		default        : {},
+		displayOptions : {
+			show: {
+				resource  : ['participant'],
+				operation : ['create'],
+			},
+		},
+		options: [
+			{
+				displayName : 'Language',
+				name        : 'lang',
+				type        : 'string',
+				default     : 'EN',
+				description : 'Participant language code (ISO 639-1). Defaults to "EN".',
+			},
+			{
+				displayName : 'Source',
+				name        : 'source',
+				type        : 'string',
+				default     : 'n8n-integration',
+				description : 'Tag identifying where the participant came from. Defaults to "n8n-integration".',
+			},
+		],
+	},
+
 	/* "Get" Operation — Pick A Search Field And Provide Its Value */
 	{
 		displayName      : 'Search By',

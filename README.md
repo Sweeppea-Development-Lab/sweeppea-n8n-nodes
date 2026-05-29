@@ -303,6 +303,12 @@ Users who install the node via `npm i n8n-nodes-sweeppea` don't need this — th
 
 ## Version history
 
+### 0.2.3
+
+- **AI Agent tool-mode fix for `Participant → Create`**. The body inputs (`Email`, `Phone Number`, `Bonus Entries`, `Custom Fields`, plus `Language` / `Source` under a new `Create Options` collection) are now exposed as top-level node parameters, so an AI Agent can fill them via `$fromAI()` when the Sweeppea node is used as a tool.
+- Backwards compatible with v0.1 / v0.2 workflows: when the new parameters are left at their defaults (empty string / `0` / `{}`), the operation falls back to `items[i].json` exactly as before. The `Additional Fields → Use Input Data` toggle and the `entryPageFields` payload shape (underscored keys like `First_Name`) are unchanged.
+- Priority order: explicit node parameter > input item field > hardcoded default.
+
 ### 0.2.2
 
 - Addresses n8n community-node review feedback (no runtime behavior change):
