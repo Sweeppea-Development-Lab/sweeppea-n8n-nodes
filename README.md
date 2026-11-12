@@ -22,7 +22,7 @@ Follow the [installation guide](https://docs.n8n.io/integrations/community-nodes
 
 ## Operations
 
-Since v0.3.0 the node covers the **whole public Sweeppea API V3**: **19 resources, 104 operations**, plus a polling **Sweeppea Trigger**. Every operation uses the same Sweeppea API credential. Sweepstakes, groups and timezones are picked from dropdowns loaded from your account (or set with an expression).
+Since v0.3.0 the node covers **every documented endpoint of the Sweeppea API V3** (115 endpoints): **21 resources, 117 operations**, plus a polling **Sweeppea Trigger**. Every operation uses the same Sweeppea API credential. Sweepstakes, groups and timezones are picked from dropdowns loaded from your account (or set with an expression).
 
 ### Participant
 
@@ -30,6 +30,7 @@ Since v0.3.0 the node covers the **whole public Sweeppea API V3**: **19 resource
 - **Create** — Register a new participant in a sweepstake with dynamic field support
 - **Delete** — Remove a participant by `ParticipantToken`
 - **Get** — Fetch a single participant by email, phone or token
+- **Update Bonus Entries** — Set the bonus entries of a participant *(new in 0.3.0)*
 - **Get Form Fields** — Retrieve the dynamic entry form fields for a sweepstake (useful for building chatbots or dynamic forms)
 - **Get Many** — Paginated list of participants with search and date filters
 
@@ -63,18 +64,20 @@ Since v0.3.0 the node covers the **whole public Sweeppea API V3**: **19 resource
 | **Calendar Event** | Create, Get, Get Many, Update, Delete |
 | **Code** (codes & coupons) | Create, Generate, Get, Get Many, Get Stats, Get Settings, Update, Update Settings, Assign, Unassign, Redeem, Unredeem, Send to Participant, Delete |
 | **Drip Campaign** | Get, Get Many, Get Report, Get Enrollments, Pause, Resume, Remove Contact |
+| **Entry Page** | Get Form Fields, Get Settings, Update Settings (texts, opt-ins, age gate, AMOE, widgets) |
+| **File** (Sweeppea Drive) | Upload (from an n8n binary), Download (to an n8n binary), Get URL, Get Many, Send by Email, Delete |
 | **Group** | Create, Get Many, Rename, Delete |
 | **Invoice** | Create, Get, Get Many, Update (publish / cancel), Delete |
 | **Message** | Send to Participant (email / SMS), Get Usage |
 | **Messaging Campaign** | Get, Get Many, Get Report, Get Recipients, Pause, Resume, Cancel |
-| **Note** | Create, Get Many, Update, Delete |
+| **Note** | Create, Get, Get Many, Update, Delete |
 | **Reference Data** | Timezones, US States, Countries, Zip Codes, Area Codes, Documentation |
 | **Support Ticket** | Create, Get, Get Many Open, Get Many Closed, Update, Resolve, Delete |
 | **Suppression** | Add, Get Many, Remove |
 | **Survey** | Create, Get, Get Many, Get Responses, Get Report, Update, Delete |
-| **To-Do** | Create, Get Many |
+| **To-Do** | Create, Get Many, Update, Delete (update and delete need an admin API key) |
 
-List operations return one n8n item per record. Paginated ones offer **Return All** / **Limit** and page through the API for you.
+List operations return one n8n item per record. Paginated ones offer **Return All** / **Limit** and page through the API for you. Delete operations return `deleted: true` plus the API response. In **Update Fields**, a text field that is added but left empty clears the value.
 
 ### Sweeppea Trigger
 
@@ -82,10 +85,14 @@ A polling trigger that starts a workflow when a sweepstake gets a **New Particip
 
 ### API surface decisions
 
-- The node follows the **public OpenAPI contract** at [apidocs.sweeppea.com](https://apidocs.sweeppea.com). Where that document is behind the production API (support tickets, to-dos, documentation, lookups, the rules wizard), the node follows the payloads the Sweeppea MCP server uses in production.
-- Endpoints that exist in the API but are not in the public contract (drive files, entry-page settings, single note, to-do update/delete, bonus-entry updates) are **not** exposed. Use the [Sweeppea MCP server](#advanced-connect-the-mcp-client-tool) for those.
+- The node follows the endpoint pages of [apidocs.sweeppea.com](https://apidocs.sweeppea.com). Where the downloadable `openapi.json` differs from those pages (support tickets, to-dos, documentation, lookups, the rules wizard, HTTP methods), the pages win; every operation was checked against the live API.
 - Drip campaigns and messaging campaigns can be read, paused, resumed and cancelled, but **not created or edited**: the API omits those writes on purpose, and they are done in the Sweeppea app.
-- The node does **not** run the legal guardrails of the Sweeppea MCP server (AMOE, minimum age, alcohol 21+). Review rules-wizard answers and sweepstake settings yourself before running a workflow, especially when an AI Agent drives the node.
+- The node does **not** run the legal guardrails of the Sweeppea MCP server (AMOE, minimum age, alcohol 21+). Review rules-wizard answers and entry-page settings yourself before running a workflow, especially when an AI Agent drives the node.
+
+### Known API issues (November 2026)
+
+- **Group → Delete** returns HTTP 500 from the API for every request (POST, any casing). The node sends the documented body; the fix is server-side.
+- **Sweepstake → Pause** returns HTTP 500 for a sweepstake whose start date is in the future; it works once the sweepstake has started.
 
 ## Credentials
 
@@ -182,7 +189,7 @@ Then add a Sweeppea node to an AI Agent's tool list — n8n will expose every op
 
 ### Advanced: connect the MCP Client Tool
 
-Since v0.3.0 this node covers the whole public API. For the few operations it does not expose (drive files, entry-page settings) and for the server-side legal guardrails, Sweeppea publishes a Streamable-HTTP MCP server at **`https://mcp.sweeppea.com`** (116 tools as of v1.23).
+Since v0.3.0 this node covers every documented API endpoint. For conversational use with server-side legal guardrails (AMOE, minimum age, alcohol 21+), Sweeppea also publishes a Streamable-HTTP MCP server at **`https://mcp.sweeppea.com`** (116 tools as of v1.23).
 
 In n8n, add an **MCP Client Tool** node to your AI Agent with:
 
@@ -354,14 +361,15 @@ Users who install the node via `npm i n8n-nodes-sweeppea` don't need this — th
 
 ### 0.3.0
 
-- **Full public API coverage**: 15 new resources and 89 new operations (104 in total) — accounts, billing, calendar, codes & coupons, drip and messaging campaigns, groups, invoices, one-to-one messages, notes, reference data, support tickets, suppressions, surveys, to-dos, scheduled drawings and the rules wizard. See [Operations](#operations).
+- **Full API coverage**: 17 new resources and 102 new operations (117 in total, covering all 115 documented endpoints) — accounts, billing, calendar, codes & coupons, drip and messaging campaigns, entry page settings, Drive files (binary upload and download), groups, invoices, one-to-one messages, notes, reference data, support tickets, suppressions, surveys, to-dos, bonus entries, scheduled drawings and the rules wizard. See [Operations](#operations).
 - **New node: Sweeppea Trigger** (polling) — New Participant, New Winner, New Survey Response.
 - Dropdowns loaded from the account for sweepstakes, groups and timezones.
+- Light and dark icons.
 - List operations return one item per record; paginated ones support Return All / Limit.
 - Clearer errors: 404s name the missing resource, and 403 / 409 / 422 responses surface the API message (for example "module is not enabled").
 - New example: [Café Aurora](#7-café-aurora--a-full-campaign-end-to-end-v030), a complete campaign in five workflows.
 - Backwards compatible: the 15 operations of v0.2, their parameter names, defaults, payloads and the credential are unchanged; v0.1 / v0.2 workflows import and run as before.
-- Toolchain: `@n8n/node-cli` 0.56, `release-it` 21, Node 24 in CI (`.nvmrc`).
+- Toolchain: `@n8n/node-cli` 0.56.3, `release-it` 21, Node 24 in CI (`.nvmrc`).
 
 ### 0.2.3
 
