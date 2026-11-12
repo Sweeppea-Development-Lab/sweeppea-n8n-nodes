@@ -6,7 +6,7 @@
 	                    |_|  |_|
 
 	Platform  : Sweeppea N8N Integration
-	Version   : 0.2.0
+	Version   : 0.3.0
 	Path      : /nodes/Sweeppea/Sweeppea.node.ts
 
 	(c) Sweeppea, all rights reserved.
@@ -15,6 +15,7 @@
 import {
 	IExecuteFunctions,
 	INodeExecutionData,
+	INodePropertyOptions,
 	INodeType,
 	INodeTypeDescription,
 	JsonObject,
@@ -47,10 +48,30 @@ import {
 	ruleOperations,
 } from './descriptions/RuleDescription';
 
+import {
+	catalogFields,
+	catalogOperationSelectors,
+	catalogResourceOptions,
+	withCatalogOperations,
+} from './descriptions/CatalogDescription';
+
+import { findCatalogOperation } from './catalog';
+import { executeCatalogOperation } from './operations/catalog';
+import * as loadOptions from './methods/loadOptions';
+
 import * as participantOps from './operations/participant';
 import * as sweepstakeOps from './operations/sweepstake';
 import * as winnerOps from './operations/winner';
 import * as ruleOps from './operations/rule';
+
+/* v0.2 Resources Plus Every Resource Added By The Catalog, Sorted By Name */
+const resourceOptions: INodePropertyOptions[] = [
+	{ name: 'Participant', value: 'participant' },
+	{ name: 'Rule', value: 'rule' },
+	{ name: 'Sweepstake', value: 'sweepstake' },
+	{ name: 'Winner', value: 'winner' },
+	...catalogResourceOptions,
+].sort((_a, _b) => _a.name.localeCompare(_b.name, 'en', { sensitivity: 'base' }));
 
 export class Sweeppea implements INodeType {
 
@@ -61,7 +82,7 @@ export class Sweeppea implements INodeType {
 		group       : ['transform'],
 		version     : 1,
 		subtitle    : '={{$parameter["operation"] + ": " + $parameter["resource"]}}',
-		description : 'Interact with the Sweeppea API',
+		description : 'Run sweepstakes end to end with the Sweeppea API: participants, winners, codes, messaging, surveys, rules and more',
 		defaults    : {
 			name: 'Sweeppea',
 		},
@@ -79,36 +100,30 @@ export class Sweeppea implements INodeType {
 				name             : 'resource',
 				type             : 'options',
 				noDataExpression : true,
-				options          : [
-					{
-						name  : 'Participant',
-						value : 'participant',
-					},
-					{
-						name  : 'Rule',
-						value : 'rule',
-					},
-					{
-						name  : 'Sweepstake',
-						value : 'sweepstake',
-					},
-					{
-						name  : 'Winner',
-						value : 'winner',
-					},
-				],
+				options          : resourceOptions,
 				default: 'participant',
 			},
 			...participantOperations,
-			...ruleOperations,
-			...sweepstakeOperations,
-			...winnerOperations,
+			...withCatalogOperations(ruleOperations, 'rule'),
+			...withCatalogOperations(sweepstakeOperations, 'sweepstake'),
+			...withCatalogOperations(winnerOperations, 'winner'),
+			...catalogOperationSelectors,
 			...participantFields,
 			...ruleFields,
 			...sweepstakeFields,
 			...winnerFields,
+			...catalogFields,
 		],
 		usableAsTool: true,
+	};
+
+	methods = {
+		loadOptions: {
+			getGroups        : loadOptions.getGroups,
+			getGroupsWithAll : loadOptions.getGroupsWithAll,
+			getSweepstakes   : loadOptions.getSweepstakes,
+			getTimezones     : loadOptions.getTimezones,
+		},
 	};
 
 	async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
@@ -118,13 +133,20 @@ export class Sweeppea implements INodeType {
 		const resource   = this.getNodeParameter('resource', 0) as string;
 		const operation  = this.getNodeParameter('operation', 0) as string;
 
+		/* v0.3 Operations Are Described In The Catalog; v0.2 Ones Keep Their Hand-written Code */
+		const catalogOperation = findCatalogOperation(resource, operation);
+
 		for (let i = 0; i < items.length; i++) {
 
 			try {
 
 				let result: INodeExecutionData[];
 
-				if (resource === 'participant') {
+				if (catalogOperation) {
+
+					result = await executeCatalogOperation.call(this, catalogOperation, i);
+
+				} else if (resource === 'participant') {
 
 					if (operation === 'count') {
 
@@ -250,7 +272,7 @@ export class Sweeppea implements INodeType {
 
 				/* mapApiError() Maps Raw API Errors To NodeOperation/ApiError */
 				/* And Passes Through Already-typed Errors Unchanged           */
-				throw mapApiError(this.getNode(), error, i);
+				throw mapApiError(this.getNode(), error, i, catalogOperation?.notFound);
 			}
 		}
 
