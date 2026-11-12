@@ -1,0 +1,203 @@
+{
+  "name": "Café Aurora · 3 · Kiosk entries",
+  "nodes": [
+    {
+      "id": "t",
+      "name": "Kiosk batch received",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        300
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "c",
+      "name": "Walk-in entries",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        300
+      ],
+      "parameters": {
+        "jsCode": "const people = [\n  ['Olivia','Bennett','Flat white',9],['Liam','Carter','Cold brew',5],['Emma','Brooks','Cappuccino',12],\n  ['Noah','Hayes','Espresso',14],['Ava','Mitchell','Oat latte',7],['Lucas','Reed','Americano',10],\n  ['Mia','Foster','Mocha',4],['Ethan','Price','Pour-over',6],['Sofia','Ramirez','Cortado',8],['James','Cole','Chai latte',3],\n];\nreturn people.map(([firstName, lastName, favoriteCoffee, coffeesPerWeek], i) => ({ json: {\n  firstName, lastName, favoriteCoffee, coffeesPerWeek,\n  email: (firstName + '.' + lastName).toLowerCase() + '@example.com',\n  phone: '202555' + String(120 + i).padStart(4, '0'),\n}}));"
+      }
+    },
+    {
+      "id": "p",
+      "name": "Register participant",
+      "type": "n8n-nodes-sweeppea.sweeppea",
+      "typeVersion": 1,
+      "position": [
+        520,
+        300
+      ],
+      "credentials": {
+        "sweeppeaApi": {
+          "id": "",
+          "name": "Sweeppea account"
+        }
+      },
+      "parameters": {
+        "resource": "participant",
+        "operation": "create",
+        "sweepstakesToken": "YOUR_SWEEPSTAKES_TOKEN",
+        "KeyEmail": "={{ $json.email }}",
+        "KeyPhoneNumber": "={{ $json.phone }}",
+        "BonusEntries": "={{ $json.coffeesPerWeek >= 10 ? 2 : 0 }}",
+        "CustomFields": "={{ JSON.stringify({ First_Name: $json.firstName, Last_Name: $json.lastName, Email: $json.email, Mobile_Number: $json.phone }) }}",
+        "createOptions": {
+          "source": "kiosk"
+        }
+      }
+    },
+    {
+      "id": "d",
+      "name": "Save to participants sheet",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        780,
+        300
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "insert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "Café Aurora · Participants"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "firstName": "={{ $('Walk-in entries').item.json.firstName }}",
+            "lastName": "={{ $('Walk-in entries').item.json.lastName }}",
+            "email": "={{ $('Walk-in entries').item.json.email }}",
+            "phone": "={{ $('Walk-in entries').item.json.phone }}",
+            "favoriteCoffee": "={{ $('Walk-in entries').item.json.favoriteCoffee }}",
+            "coffeesPerWeek": "={{ $('Walk-in entries').item.json.coffeesPerWeek }}",
+            "source": "kiosk"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "firstName",
+              "displayName": "firstName",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "lastName",
+              "displayName": "lastName",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "phone",
+              "displayName": "phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "favoriteCoffee",
+              "displayName": "favoriteCoffee",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "coffeesPerWeek",
+              "displayName": "coffeesPerWeek",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "source",
+              "displayName": "source",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Kiosk batch received": {
+      "main": [
+        [
+          {
+            "node": "Walk-in entries",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Walk-in entries": {
+      "main": [
+        [
+          {
+            "node": "Register participant",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Register participant": {
+      "main": [
+        [
+          {
+            "node": "Save to participants sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
