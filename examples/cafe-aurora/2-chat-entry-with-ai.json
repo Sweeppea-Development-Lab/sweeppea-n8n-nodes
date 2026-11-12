@@ -119,7 +119,7 @@
       ],
       "parameters": {
         "resource": "row",
-        "operation": "insert",
+        "operation": "upsert",
         "dataTableId": {
           "__rl": true,
           "mode": "list",
@@ -213,7 +213,17 @@
           "attemptToConvertTypes": false,
           "convertFieldsToString": false
         },
-        "options": {}
+        "options": {},
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "email",
+              "condition": "eq",
+              "keyValue": "={{ $fromAI('email', 'Email address', 'string') }}"
+            }
+          ]
+        }
       }
     },
     {

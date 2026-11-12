@@ -324,7 +324,7 @@ The system prompt instructs the agent to confirm before any destructive action (
 **Folder:** `examples/cafe-aurora/` — five workflows that run a complete (fictitious) coffee-shop giveaway:
 
 1. `1-launch-the-campaign.json` — creates the sweepstake, a VIP group, the official rules, 10 prize codes, a calendar event and a team to-do, in one run.
-2. `2-chat-entry-with-ai.json` — a public hosted chat where an AI Agent collects name, email and phone, asks two survey questions, confirms age and rules acceptance, registers the participant (`Participant → Create` as a tool) and saves the answers to an n8n Data Table.
+2. `2-chat-entry-with-ai.json` — a public hosted chat where an AI Agent collects name, email and phone, asks two survey questions, confirms age and rules acceptance, registers the participant (`Participant → Create` as a tool) and saves the answers to an n8n Data Table (upsert by email, so a retried turn never duplicates a row).
 3. `3-kiosk-entries.json` — a batch of walk-in entries (kiosk / POS import) registered in Sweeppea and saved to the same Data Table.
 4. `4-live-participants-sheet.json` — the **Sweeppea Trigger** (New Participant) keeps the Data Table in sync with every new entry, whatever channel it came from.
 5. `5-draw-winners-and-deliver-prizes.json` — draws 3 winners, assigns each one an available prize code, emails the code (`Code → Send to Participant`) and a personal congratulation (`Message → Send to Participant`), marks the winners in the Data Table and saves a pinned drawing report as a Sweeppea note.
