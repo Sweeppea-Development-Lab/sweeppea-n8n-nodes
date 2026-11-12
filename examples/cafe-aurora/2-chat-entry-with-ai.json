@@ -17,9 +17,9 @@
         "options": {
           "title": "Café Aurora ☕",
           "subtitle": "Fall Coffee Giveaway · enter in one minute",
-          "initialMessages": "Hi! ☕ Want to win a year of free coffee?\nI can enter you in the Café Aurora Fall Giveaway right here.",
           "inputPlaceholder": "Type your answer…"
-        }
+        },
+        "initialMessages": "Hi! ☕ Want to win a year of free coffee?\nI can enter you in the Café Aurora Fall Giveaway right here."
       }
     },
     {
