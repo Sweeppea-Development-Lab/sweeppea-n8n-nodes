@@ -199,7 +199,7 @@ function writeField(
  * `Data` Can Be The Array Itself, Or An Object Holding It (Codes, Invoices,
  * Campaigns...), And Some Legacy Endpoints Put It At The Response Root
  */
-export function extractList(_response: IDataObject, _listKey?: string): IDataObject[] | undefined {
+export function extractList(_response: IDataObject, _listKey?: string | string[]): IDataObject[] | undefined {
 
 	const data = _response.Data;
 
@@ -217,14 +217,35 @@ export function extractList(_response: IDataObject, _listKey?: string): IDataObj
 
 	containers.push(_response);
 
+	/* Explicit Keys (From The API Docs): Arrays Are Concatenated, Single Objects Become One Row */
 	if (_listKey) {
+
+		const listKeys = Array.isArray(_listKey) ? _listKey : [_listKey];
 
 		for (const container of containers) {
 
-			if (Array.isArray(container[_listKey])) {
+			if (!listKeys.some(_key => container[_key] !== undefined)) {
 
-				return container[_listKey] as IDataObject[];
+				continue;
 			}
+
+			const rows: IDataObject[] = [];
+
+			for (const key of listKeys) {
+
+				const value = container[key];
+
+				if (Array.isArray(value)) {
+
+					rows.push(...(value as IDataObject[]));
+
+				} else if (value && typeof value === 'object') {
+
+					rows.push(value as IDataObject);
+				}
+			}
+
+			return rows;
 		}
 	}
 
@@ -288,10 +309,19 @@ export async function executeCatalogOperation(
 ): Promise<INodeExecutionData[]> {
 
 	const body: IDataObject = {};
+	const local: IDataObject = {};
 
 	for (const field of _operation.fields ?? []) {
 
 		const raw = this.getNodeParameter(catalogParameterName(field.key), i, undefined);
+
+		/* Node-side Settings And Binary Inputs Are Resolved Below, Not Sent As-is */
+		if (field.local || field.type === 'binary') {
+
+			local[field.key] = raw;
+
+			continue;
+		}
 
 		writeField.call(this, body, field, raw, i);
 	}
@@ -302,10 +332,42 @@ export async function executeCatalogOperation(
 
 		for (const field of _operation.optional) {
 
-			if (options[field.key] !== undefined) {
+			if (options[field.key] === undefined) {
 
-				writeField.call(this, body, field, options[field.key], i);
+				continue;
 			}
+
+			/* In "Update Fields", A Text Field Added But Left Empty Clears The Value (Sent As null) */
+			const clearable = _operation.optionalLabel === 'Update Fields' && ['string', 'multiline', 'date', 'dateTime'].includes(field.type);
+
+			if (clearable && options[field.key] === '') {
+
+				body[field.key] = null;
+
+				continue;
+			}
+
+			writeField.call(this, body, field, options[field.key], i);
+		}
+	}
+
+	/* Binary Input → Base64 Body Field, With File Name / MIME Type Defaults From The File */
+	for (const field of (_operation.fields ?? []).filter(_f => _f.type === 'binary')) {
+
+		const propertyName = String(local[field.key] || 'data');
+		const binary       = this.helpers.assertBinaryData(i, propertyName);
+		const buffer       = await this.helpers.getBinaryDataBuffer(i, propertyName);
+
+		body[field.key] = buffer.toString('base64');
+
+		if (isEmpty(body.Filename) && binary.fileName) {
+
+			body.Filename = binary.fileName;
+		}
+
+		if (isEmpty(body.MimeType) && binary.mimeType) {
+
+			body.MimeType = binary.mimeType;
 		}
 	}
 
@@ -362,6 +424,46 @@ export async function executeCatalogOperation(
 	}
 
 	const response = await sweeppeaApiRequest.call(this, method, _operation.endpoint, body);
+
+	/* File Download: Fetch The Presigned URL Into An n8n Binary Property */
+	if (_operation.downloadUrl) {
+
+		const data = (response.Data ?? {}) as IDataObject;
+
+		if (!data.Url) {
+
+			throw new NodeOperationError(this.getNode(), 'Sweeppea did not return a download URL for this file', { itemIndex: i });
+		}
+
+		const content = await this.helpers.httpRequest({
+			method   : 'GET',
+			url      : data.Url as string,
+			encoding : 'arraybuffer',
+			json     : false,
+		}) as ArrayBuffer;
+
+		const property = String(local.binaryPropertyName || 'data');
+		const binary   = await this.helpers.prepareBinaryData(
+			Buffer.from(content),
+			(data.Filename as string) || undefined,
+			(data.MimeType as string) || undefined,
+		);
+
+		return [{
+			json       : data,
+			binary     : { [property]: binary },
+			pairedItem : { item: i },
+		}];
+	}
+
+	/* Deletes Follow The n8n Convention Of Returning { deleted: true } (Plus The API Envelope) */
+	if (_operation.value === 'delete' && response.Response !== false) {
+
+		return [{
+			json       : { deleted: true, ...response },
+			pairedItem : { item: i },
+		}];
+	}
 
 	/* Single-call List */
 	if (_operation.list) {

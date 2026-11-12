@@ -38,6 +38,7 @@ interface EventDefinition {
 	sizeKey?   : string;
 	pageSize   : number;
 	idKeys     : string[];
+	listKey    : string;
 	body       : (_poll: IPollFunctions) => IDataObject;
 }
 
@@ -47,6 +48,7 @@ const EVENTS: Record<string, EventDefinition> = {
 		pageKey  : 'page',
 		pageSize : 20,
 		idKeys   : ['ParticipantToken', 'Token', '_id'],
+		listKey  : 'Participants',
 		body     : _poll => ({ sweepstakesToken: _poll.getNodeParameter('sweepstakesToken') as string }),
 	},
 	newWinner: {
@@ -55,6 +57,7 @@ const EVENTS: Record<string, EventDefinition> = {
 		sizeKey  : 'itemsPerPage',
 		pageSize : 100,
 		idKeys   : ['WinnerToken', 'Token', '_id', 'ParticipantToken'],
+		listKey  : 'Winners',
 		body     : _poll => ({ sweepstakesToken: _poll.getNodeParameter('sweepstakesToken') as string }),
 	},
 	newSurveyResponse: {
@@ -63,6 +66,7 @@ const EVENTS: Record<string, EventDefinition> = {
 		sizeKey  : 'Limit',
 		pageSize : 100,
 		idKeys   : ['ResponseToken', 'Token', '_id'],
+		listKey  : 'Responses',
 		body     : _poll => ({ SurveyToken: _poll.getNodeParameter('surveyToken') as string }),
 	},
 };
@@ -86,7 +90,7 @@ export class SweeppeaTrigger implements INodeType {
 	description: INodeTypeDescription = {
 		displayName : 'Sweeppea Trigger',
 		name        : 'sweeppeaTrigger',
-		icon        : 'file:sweeppea.svg',
+		icon        : { light: 'file:sweeppea.svg', dark: 'file:sweeppea.dark.svg' },
 		group       : ['trigger'],
 		version     : 1,
 		subtitle    : '={{$parameter["event"]}}',
@@ -197,7 +201,7 @@ export class SweeppeaTrigger implements INodeType {
 			}
 
 			const response = await sweeppeaApiRequest.call(this, 'POST', definition.endpoint, body);
-			const rows     = extractList(response) ?? [];
+			const rows     = extractList(response, definition.listKey) ?? [];
 
 			/* Manual "Fetch Test Event": Show The Most Recent Item, Touch No State */
 			if (isManual) {

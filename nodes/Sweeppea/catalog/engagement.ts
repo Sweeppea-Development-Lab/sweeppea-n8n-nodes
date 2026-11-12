@@ -131,6 +131,7 @@ export const codeResource: CatalogResource = {
 			action      : 'Get many codes',
 			description : 'List the codes of a sweepstake with the participant each one is assigned to',
 			endpoint    : '/codes/fetch',
+			listKey     : 'Codes',
 			fields      : [sweepstakeField('SweepstakesToken')],
 			optional    : [
 				{
@@ -371,6 +372,7 @@ export const campaignResource: CatalogResource = {
 			action      : 'Get many campaigns',
 			description : 'List email and SMS campaigns, newest first',
 			endpoint    : '/messaging/campaigns',
+			listKey     : 'Campaigns',
 			optional    : [
 				{ key: 'Archived', displayName: 'Archived', type: 'boolean', default: false, description: 'Whether to list archived campaigns instead' },
 				{
@@ -414,6 +416,7 @@ export const campaignResource: CatalogResource = {
 			action      : 'Get campaign recipients',
 			description : 'Who a campaign went to and what happened to each message',
 			endpoint    : '/messaging/campaign-recipients',
+			listKey     : 'Recipients',
 			fields      : [campaignTokenField],
 			optional    : [
 				{ key: 'Search', displayName: 'Exact Address', type: 'string', description: 'One exact email address or phone number' },
@@ -491,6 +494,7 @@ export const suppressionResource: CatalogResource = {
 			action      : 'Get many suppressions',
 			description : 'List every address that unsubscribed, replied STOP, complained, bounced or was added by you',
 			endpoint    : '/messaging/suppressions',
+			listKey     : 'Suppressions',
 			optional    : [
 				{ key: 'Channel', displayName: 'Channel', type: 'options', default: 'email', options: emailOrSmsOptions },
 				{ key: 'Search', displayName: 'Exact Address', type: 'string', description: 'One exact email address or phone number' },
@@ -699,6 +703,7 @@ export const surveyResource: CatalogResource = {
 			action      : 'Get many surveys',
 			description : 'List surveys with question, page and response counters and their public link',
 			endpoint    : '/surveys/fetch',
+			listKey     : 'Surveys',
 			optional    : [
 				{ key: 'Archived', displayName: 'Archived', type: 'boolean', default: false, description: 'Whether to list archived surveys' },
 				{ key: 'Status', displayName: 'Active Only', type: 'boolean', default: true, description: 'Whether to list only active surveys' },
@@ -723,6 +728,7 @@ export const surveyResource: CatalogResource = {
 			action      : 'Get survey responses',
 			description : 'Individual answers, newest first',
 			endpoint    : '/surveys/responses',
+			listKey     : 'Responses',
 			fields      : [surveyTokenField],
 			optional    : [
 				{ key: 'Completed', displayName: 'Completed Only', type: 'boolean', default: true, description: 'Whether to return only completed responses' },

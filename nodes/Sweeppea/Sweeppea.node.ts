@@ -78,7 +78,7 @@ export class Sweeppea implements INodeType {
 	description: INodeTypeDescription = {
 		displayName : 'Sweeppea',
 		name        : 'sweeppea',
-		icon        : 'file:sweeppea.svg',
+		icon        : { light: 'file:sweeppea.svg', dark: 'file:sweeppea.dark.svg' },
 		group       : ['transform'],
 		version     : 1,
 		subtitle    : '={{$parameter["operation"] + ": " + $parameter["resource"]}}',
@@ -103,7 +103,7 @@ export class Sweeppea implements INodeType {
 				options          : resourceOptions,
 				default: 'participant',
 			},
-			...participantOperations,
+			...withCatalogOperations(participantOperations, 'participant'),
 			...withCatalogOperations(ruleOperations, 'rule'),
 			...withCatalogOperations(sweepstakeOperations, 'sweepstake'),
 			...withCatalogOperations(winnerOperations, 'winner'),

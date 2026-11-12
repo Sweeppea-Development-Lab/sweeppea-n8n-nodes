@@ -34,6 +34,7 @@ export const billingResource: CatalogResource = {
 			action      : 'Get data transfer logs',
 			description : 'Data transfer billing logs of a sweepstake',
 			endpoint    : '/billing/datatransfer',
+			listKey     : 'DataTransfer',
 			fields      : [sweepstakeField('SweepstakesToken')],
 			list        : true,
 		},
@@ -43,6 +44,7 @@ export const billingResource: CatalogResource = {
 			action      : 'Get billing transactions',
 			description : 'Every billing transaction of the account',
 			endpoint    : '/billing/fetchtransactions',
+			listKey     : 'Transactions',
 			list        : true,
 		},
 		{
@@ -51,6 +53,7 @@ export const billingResource: CatalogResource = {
 			action      : 'Get wallet transactions',
 			description : 'Every wallet credit and debit of the account',
 			endpoint    : '/wallet/fetchtransactions',
+			listKey     : 'Transactions',
 			list        : true,
 		},
 	],
@@ -100,6 +103,7 @@ export const calendarResource: CatalogResource = {
 			action      : 'Delete a calendar event',
 			description : 'Permanently delete a calendar event',
 			endpoint    : '/calendar/delete',
+			method      : 'DELETE',
 			fields      : [eventTokenField],
 			notFound    : 'Calendar event not found.',
 		},
@@ -118,6 +122,7 @@ export const calendarResource: CatalogResource = {
 			action      : 'Get many calendar events',
 			description : 'Every calendar event of the account',
 			endpoint    : '/calendar/fetch',
+			listKey     : 'Events',
 			list        : true,
 		},
 		{
@@ -126,6 +131,7 @@ export const calendarResource: CatalogResource = {
 			action      : 'Update a calendar event',
 			description : 'Change an existing calendar event',
 			endpoint    : '/calendar/update',
+			method      : 'PUT',
 			fields      : [eventTokenField],
 			optional    : [
 				...calendarOptional,
@@ -243,6 +249,7 @@ export const invoiceResource: CatalogResource = {
 			action      : 'Get many invoices',
 			description : 'List invoices with pending, paid and overdue totals',
 			endpoint    : '/invoices/fetch',
+			listKey     : 'Invoices',
 			optional    : [
 				{ key: 'FromDate', displayName: 'From Date', type: 'date' },
 				{
@@ -320,11 +327,21 @@ export const noteResource: CatalogResource = {
 			notFound    : 'Note not found.',
 		},
 		{
+			value       : 'get',
+			name        : 'Get',
+			action      : 'Get a note',
+			description : 'Retrieve one note with its decrypted content',
+			endpoint    : '/notes/single',
+			fields      : [noteTokenField],
+			notFound    : 'Note not found.',
+		},
+		{
 			value       : 'getMany',
 			name        : 'Get Many',
 			action      : 'Get many notes',
 			description : 'Every note of the authenticated user',
 			endpoint    : '/notes/fetch',
+			listKey     : 'Notes',
 			list        : true,
 		},
 		{
@@ -380,10 +397,11 @@ export const ticketResource: CatalogResource = {
 			fields      : [
 				{ key: 'Title', displayName: 'Title', type: 'string', required: true },
 				{ key: 'Description', displayName: 'Description', type: 'multiline', required: true },
+				{ key: 'Priority', displayName: 'Priority', type: 'options', required: true, default: 2, options: priorityOptions },
 			],
 			optional    : [
+				{ key: 'AssignTo', displayName: 'Assign To', type: 'string', description: 'Admin to assign the ticket to' },
 				{ key: 'Platform', displayName: 'Platform', type: 'options', default: 'general', options: platformOptions, description: 'Product the ticket is about' },
-				{ key: 'Priority', displayName: 'Priority', type: 'options', default: 2, options: priorityOptions },
 			],
 		},
 		{
@@ -410,6 +428,7 @@ export const ticketResource: CatalogResource = {
 			action      : 'Get closed support tickets',
 			description : 'List closed or resolved tickets',
 			endpoint    : '/tickets/fetchClosedTickets',
+			listKey     : 'Tickets',
 			optional    : [
 				{ key: 'page', displayName: 'Page', type: 'number', default: 1, min: 1 },
 				{ key: 'platform', displayName: 'Platform', type: 'options', default: 'general', options: platformOptions },
@@ -425,6 +444,7 @@ export const ticketResource: CatalogResource = {
 			action      : 'Get open support tickets',
 			description : 'List open tickets',
 			endpoint    : '/tickets/fetchOpenTickets',
+			listKey     : 'Tickets',
 			optional    : [
 				{ key: 'page', displayName: 'Page', type: 'number', default: 1, min: 1 },
 				{ key: 'platform', displayName: 'Platform', type: 'options', default: 'general', options: platformOptions },
@@ -484,11 +504,21 @@ export const todoResource: CatalogResource = {
 			],
 		},
 		{
+			value       : 'delete',
+			name        : 'Delete',
+			action      : 'Delete a to-do',
+			description : 'Permanently delete a task (admin API keys only)',
+			endpoint    : '/tickets/deleteTodo',
+			fields      : [tokenField('TodoToken', 'To-Do Token', 'Token of the task')],
+			notFound    : 'To-do not found.',
+		},
+		{
 			value       : 'getMany',
 			name        : 'Get Many',
 			action      : 'Get many to-dos',
 			description : 'List tasks with optional filters',
 			endpoint    : '/tickets/fetchTodos',
+			listKey     : 'Todos',
 			optional    : [
 				{ key: 'dateFrom', displayName: 'From Date', type: 'date' },
 				{ key: 'dateTo', displayName: 'To Date', type: 'date' },
@@ -509,6 +539,26 @@ export const todoResource: CatalogResource = {
 			],
 			optionalLabel: 'Filters',
 			list        : true,
+		},
+		{
+			value       : 'update',
+			name        : 'Update',
+			action      : 'Update a to-do',
+			description : 'Change a task, mark it completed or set its progress (admin API keys only)',
+			endpoint    : '/tickets/updateTodo',
+			fields      : [tokenField('TodoToken', 'To-Do Token', 'Token of the task')],
+			optional    : [
+				{ key: 'Completion', displayName: 'Completion (%)', type: 'number', default: 0, min: 0, max: 100 },
+				{ key: 'Deadline', displayName: 'Deadline', type: 'date' },
+				{ key: 'Description', displayName: 'Description', type: 'multiline' },
+				{ key: 'Pin', displayName: 'Pin', type: 'boolean', default: false, description: 'Whether the task is pinned' },
+				{ key: 'Priority', displayName: 'Priority', type: 'options', default: 2, options: priorityOptions },
+				{ key: 'ResourceAffected', displayName: 'Resource Affected', type: 'string' },
+				{ key: 'Status', displayName: 'Completed', type: 'boolean', default: false, description: 'Whether the task is completed' },
+				{ key: 'Title', displayName: 'Title', type: 'string' },
+			],
+			optionalLabel: 'Update Fields',
+			notFound    : 'To-do not found.',
 		},
 	],
 };

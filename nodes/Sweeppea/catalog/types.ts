@@ -20,6 +20,7 @@
  */
 
 export type CatalogFieldType =
+	| 'binary'
 	| 'boolean'
 	| 'collection'
 	| 'date'
@@ -61,6 +62,16 @@ export interface CatalogField {
 
 	/* JSON Fields Only: Merge The Parsed Object Into The Body Root Instead Of Under `key` */
 	spread?      : boolean;
+
+	/*
+	 * Node-side Setting That Is Never Sent To The API (e.g. The Output Binary Property).
+	 * For "binary" Fields The Value Is The Input Binary Property Name; The Executor Sends
+	 * Its Base64 Content Under `key` And Fills Filename / MimeType From The File Metadata
+	 */
+	local?       : boolean;
+
+	/* Rendered By The Hand-written v0.2 Description (Same Parameter Name): Read, But Not Generated Again */
+	sharedParameter?: boolean;
 }
 
 export interface CatalogPagination {
@@ -81,7 +92,7 @@ export interface CatalogOperation {
 	action       : string;
 	description  : string;
 	endpoint     : string;
-	method?      : 'POST' | 'DELETE';
+	method?      : 'POST' | 'PUT' | 'DELETE';
 
 	/* Top-level Parameters (Usually The Required Ones) */
 	fields?      : CatalogField[];
@@ -94,7 +105,7 @@ export interface CatalogOperation {
 	list?        : boolean;
 
 	/* Key Of The List Inside `Data` (Or The Response Root). Auto-detected When Omitted */
-	listKey?     : string;
+	listKey?     : string | string[];
 
 	/* Page Through The Endpoint (Implies list) */
 	pagination?  : CatalogPagination;
@@ -104,6 +115,9 @@ export interface CatalogOperation {
 
 	/* Message For HTTP 404, Instead Of The Legacy Sweepstake Message */
 	notFound?    : string;
+
+	/* Download `Data.Url` From The Response Into An n8n Binary Property (Files) */
+	downloadUrl? : boolean;
 }
 
 export interface CatalogResource {

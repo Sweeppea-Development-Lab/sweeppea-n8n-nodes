@@ -54,7 +54,7 @@ export async function getGroups(this: ILoadOptionsFunctions): Promise<INodePrope
 		return [];
 	}
 
-	const response = await sweeppeaApiRequest.call(this, 'POST', '/groups/fetch', { sweepstakesToken });
+	const response = await sweeppeaApiRequest.call(this, 'POST', '/groups/fetch', { SweepstakesToken: sweepstakesToken });
 
 	return asList(response)
 		.map(_group => ({
@@ -72,13 +72,15 @@ export async function getGroupsWithAll(this: ILoadOptionsFunctions): Promise<INo
 	return [{ name: 'All Groups', value: 'allgroups' }, ...groups];
 }
 
-/* Timezones Accepted By Scheduled Drawings */
+/* Timezones Accepted By Scheduled Drawings → Data.Timezones[] { TimezoneId, Text } */
 export async function getTimezones(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
 
 	const response = await sweeppeaApiRequest.call(this, 'POST', '/tools/timezones', {});
+	const data     = (response.Data ?? {}) as IDataObject;
+	const list     = Array.isArray(data) ? (data as IDataObject[]) : ((data.Timezones as IDataObject[] | undefined) ?? []);
 
-	return asList(response).map(_timezone => ({
-		name  : _timezone.Offset ? `${_timezone.Name} (${_timezone.Offset})` : (_timezone.Name as string),
-		value : _timezone.ID as number,
+	return list.map(_timezone => ({
+		name  : (_timezone.Text as string) || (_timezone.Timezone as string) || String(_timezone.TimezoneId),
+		value : _timezone.TimezoneId as number,
 	}));
 }

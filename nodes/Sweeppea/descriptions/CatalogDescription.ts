@@ -156,6 +156,10 @@ function toProperty(_field: CatalogField, _name: string, _show?: DisplayShow): I
 			];
 			break;
 
+		case 'binary':
+			property.default = (_field.default as string) ?? 'data';
+			break;
+
 		case 'stringList':
 		case 'string':
 		default:
@@ -177,6 +181,11 @@ function operationProperties(_resource: string, _operation: CatalogOperation): I
 	const properties: INodeProperties[] = [];
 
 	for (const field of _operation.fields ?? []) {
+
+		if (field.sharedParameter) {
+
+			continue;
+		}
 
 		properties.push(toProperty(field, catalogParameterName(field.key), show));
 	}

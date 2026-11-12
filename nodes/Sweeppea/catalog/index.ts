@@ -33,6 +33,12 @@ import {
 } from './engagement';
 
 import {
+	entryPageResource,
+	fileResource,
+	participantExtension,
+} from './content';
+
+import {
 	billingResource,
 	calendarResource,
 	invoiceResource,
@@ -49,10 +55,13 @@ export const catalogResources: CatalogResource[] = [
 	campaignResource,
 	codeResource,
 	dripResource,
+	entryPageResource,
+	fileResource,
 	groupResource,
 	invoiceResource,
 	messageResource,
 	noteResource,
+	participantExtension,
 	referenceResource,
 	ruleExtension,
 	suppressionResource,
