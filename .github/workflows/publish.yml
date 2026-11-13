@@ -39,9 +39,8 @@
 #
 # ─── TAG CONVENTION ────────────────────────────────────────────────────────────
 #
-# This workflow triggers on tags matching "*.*.*" (e.g. 0.2.0).
-# If you prefer tags with a "v" prefix (e.g. v0.2.0), change the filter to:
-#   tags: ['v*.*.*']
+# This workflow triggers on tags matching "v*.*.*" (e.g. v0.2.0), the
+# convention used since v0.2.0.
 #
 # ─── RELEASE PROCESS ───────────────────────────────────────────────────────────
 #
@@ -72,13 +71,22 @@ jobs:
       contents: read
 
     steps:
-      - uses: actions/checkout@v4
+      # Actions are pinned to full commit SHAs (tag in the trailing comment) so a
+      # moved or compromised tag cannot inject code into a job holding id-token: write.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # The CI release path only runs `npm publish`; it never pushes back to git.
+          persist-credentials: false
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 'lts/*'
-          cache: 'npm'
+          # Single source of truth for the Node version. Do NOT use 'lts/*': it moved
+          # to Node 26 in Oct 2026 and `npm ci` fails there (isolated-vm, a transitive
+          # dependency of the dev tooling, has no Node 26 build and does not compile).
+          node-version-file: '.nvmrc'
+          # No dependency cache in a publishing job (cache-poisoning hardening).
+          package-manager-cache: false
 
       - name: Install dependencies
         run: 'npm ci'
@@ -92,7 +100,9 @@ jobs:
         # Option B (token): set NPM_TOKEN in repo secrets — it is written to
         #   .npmrc here before publishing.
         run: |
-          [ -n "$NPM_TOKEN" ] && npm config set //registry.npmjs.org/:_authToken "$NPM_TOKEN"
+          if [ -n "$NPM_TOKEN" ]; then
+            npm config set //registry.npmjs.org/:_authToken "$NPM_TOKEN"
+          fi
           npm run release
         env:
-          NPM_TOKEN: $
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

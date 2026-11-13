@@ -55,10 +55,10 @@
 		"n8n-workflow": "*"
 	},
 	"devDependencies": {
-		"@n8n/node-cli": "*",
+		"@n8n/node-cli": "^0.56.2",
 		"eslint": "9.39.4",
 		"prettier": "3.8.3",
-		"release-it": "20.0.1",
+		"release-it": "^21.1.2",
 		"typescript": "5.9.3"
 	}
 }
