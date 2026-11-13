@@ -1,0 +1,244 @@
+{
+  "name": "Café Aurora · 1 · Launch the campaign",
+  "nodes": [
+    {
+      "id": "trigger",
+      "name": "Launch campaign",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        300
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "create-the-sweepstake",
+      "name": "Create the sweepstake",
+      "type": "n8n-nodes-sweeppea.sweeppea",
+      "typeVersion": 1,
+      "position": [
+        260,
+        300
+      ],
+      "credentials": {
+        "sweeppeaApi": {
+          "id": "",
+          "name": "Sweeppea account"
+        }
+      },
+      "parameters": {
+        "resource": "sweepstake",
+        "operation": "create",
+        "sweepstakesName": "Café Aurora Fall Coffee Giveaway (n8n demo)",
+        "sweepstakesType": 2,
+        "handler": "AURORAN8N",
+        "startDate": "2026-11-12",
+        "endDate": "2026-12-15",
+        "startTime": "00:00",
+        "endTime": "23:59"
+      }
+    },
+    {
+      "id": "create-vip-group",
+      "name": "Create VIP group",
+      "type": "n8n-nodes-sweeppea.sweeppea",
+      "typeVersion": 1,
+      "position": [
+        520,
+        300
+      ],
+      "credentials": {
+        "sweeppeaApi": {
+          "id": "",
+          "name": "Sweeppea account"
+        }
+      },
+      "parameters": {
+        "resource": "group",
+        "operation": "create",
+        "sweepstakesToken": "={{ $('Create the sweepstake').first().json.Data.SweepstakesToken }}",
+        "groupName": "VIP Coffee Lovers"
+      }
+    },
+    {
+      "id": "publish-official-rules",
+      "name": "Publish official rules",
+      "type": "n8n-nodes-sweeppea.sweeppea",
+      "typeVersion": 1,
+      "position": [
+        780,
+        300
+      ],
+      "credentials": {
+        "sweeppeaApi": {
+          "id": "",
+          "name": "Sweeppea account"
+        }
+      },
+      "parameters": {
+        "resource": "rule",
+        "operation": "create",
+        "sweepstakesToken": "={{ $('Create the sweepstake').first().json.Data.SweepstakesToken }}",
+        "ruleTitle": "Official Rules",
+        "ruleDocumentContent": "<h1>Café Aurora Fall Coffee Giveaway — Official Rules (DEMO)</h1><p><strong>This is a demonstration sweepstake created with the Sweeppea n8n node. It is not a real promotion.</strong></p><p>NO PURCHASE NECESSARY. Entry period: November 12 – December 15, 2026. Three winners will receive one year of free coffee. Sponsor: Café Aurora (fictitious), example.com.</p>"
+      }
+    },
+    {
+      "id": "generate-prize-codes",
+      "name": "Generate prize codes",
+      "type": "n8n-nodes-sweeppea.sweeppea",
+      "typeVersion": 1,
+      "position": [
+        1040,
+        300
+      ],
+      "credentials": {
+        "sweeppeaApi": {
+          "id": "",
+          "name": "Sweeppea account"
+        }
+      },
+      "parameters": {
+        "resource": "code",
+        "operation": "generate",
+        "sweepstakesToken": "={{ $('Create the sweepstake').first().json.Data.SweepstakesToken }}",
+        "quantity": 10,
+        "length": 6,
+        "catalogOptions": {
+          "Prefix": "AURORA-",
+          "Type": "alphanumeric",
+          "Case": "upper",
+          "Value": "$120",
+          "Description": "One year of free coffee at Café Aurora (demo)",
+          "ExpirationDate": "2027-03-31"
+        }
+      }
+    },
+    {
+      "id": "add-drawing-day-to-calendar",
+      "name": "Add drawing day to calendar",
+      "type": "n8n-nodes-sweeppea.sweeppea",
+      "typeVersion": 1,
+      "position": [
+        1300,
+        300
+      ],
+      "credentials": {
+        "sweeppeaApi": {
+          "id": "",
+          "name": "Sweeppea account"
+        }
+      },
+      "parameters": {
+        "resource": "calendarEvent",
+        "operation": "create",
+        "eventTitle": "Café Aurora winners drawing (demo)",
+        "eventStartDate": "2026-12-16T15:00:00",
+        "eventEndDate": "2026-12-16T16:00:00",
+        "catalogOptions": {
+          "EventDescription": "Draw 3 winners and send their prize codes",
+          "EventColor": "#7bd63a",
+          "SweepstakesToken": "={{ $('Create the sweepstake').first().json.Data.SweepstakesToken }}"
+        }
+      }
+    },
+    {
+      "id": "create-team-to-do",
+      "name": "Create team to-do",
+      "type": "n8n-nodes-sweeppea.sweeppea",
+      "typeVersion": 1,
+      "position": [
+        1560,
+        300
+      ],
+      "credentials": {
+        "sweeppeaApi": {
+          "id": "",
+          "name": "Sweeppea account"
+        }
+      },
+      "parameters": {
+        "resource": "todo",
+        "operation": "create",
+        "title": "Prepare 3 prize kits for the Café Aurora winners (demo)",
+        "priority": 3,
+        "catalogOptions": {
+          "Deadline": "2026-12-16",
+          "Description": "Coffee bags, mug and the printed prize code"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Launch campaign": {
+      "main": [
+        [
+          {
+            "node": "Create the sweepstake",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create the sweepstake": {
+      "main": [
+        [
+          {
+            "node": "Create VIP group",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create VIP group": {
+      "main": [
+        [
+          {
+            "node": "Publish official rules",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Publish official rules": {
+      "main": [
+        [
+          {
+            "node": "Generate prize codes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate prize codes": {
+      "main": [
+        [
+          {
+            "node": "Add drawing day to calendar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add drawing day to calendar": {
+      "main": [
+        [
+          {
+            "node": "Create team to-do",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

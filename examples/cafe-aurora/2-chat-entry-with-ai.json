@@ -1,0 +1,322 @@
+{
+  "name": "Café Aurora · 2 · Chat entry with AI",
+  "nodes": [
+    {
+      "id": "chat",
+      "name": "Chat with Café Aurora",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        300
+      ],
+      "webhookId": "cafe-aurora-entry",
+      "parameters": {
+        "public": true,
+        "mode": "hostedChat",
+        "options": {
+          "title": "Café Aurora ☕",
+          "subtitle": "Fall Coffee Giveaway · enter in one minute",
+          "inputPlaceholder": "Type your answer…"
+        },
+        "initialMessages": "Hi! ☕ Want to win a year of free coffee?\nI can enter you in the Café Aurora Fall Giveaway right here."
+      }
+    },
+    {
+      "id": "agent",
+      "name": "Entry assistant",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        300,
+        300
+      ],
+      "parameters": {
+        "options": {
+          "systemMessage": "You are the friendly entry assistant of Café Aurora's Fall Coffee Giveaway (prize: one year of free coffee, 3 winners, drawing on December 16, 2026). This is a demo campaign.\n\nGoal: enter the person in the sweepstake in under a minute.\n1. Ask for first name, last name, email and US mobile number (you may ask for several at once).\n2. Ask two quick questions: their favorite coffee drink, and how many coffees they drink per week (a number).\n3. Ask them to confirm they are 18 or older and accept the official rules. Do not register anyone who does not confirm.\n4. Call register_participant with their data. If it fails, explain the error message briefly and ask them to fix the data.\n5. Call save_survey_answers with all the collected data.\n6. Confirm the entry in one short, warm sentence and mention the drawing date.\n\nRules: keep every reply short (max 2 sentences), never invent data, never show tokens or IDs. If asked how many people entered, use count_entries."
+        }
+      }
+    },
+    {
+      "id": "llm",
+      "name": "MiniMax M3.1 (NVIDIA)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        160,
+        560
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "",
+          "name": "OpenAI account"
+        }
+      },
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "minimaxai/minimax-m3.1-flash",
+          "mode": "list",
+          "cachedResultName": "minimaxai/minimax-m3.1-flash"
+        },
+        "options": {
+          "temperature": 0.3,
+          "timeout": 60000,
+          "maxRetries": 3
+        }
+      }
+    },
+    {
+      "id": "mem",
+      "name": "Conversation memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        320,
+        560
+      ],
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Chat with Café Aurora').first().json.sessionId }}",
+        "contextWindowLength": 20
+      }
+    },
+    {
+      "id": "reg",
+      "name": "register_participant",
+      "type": "n8n-nodes-sweeppea.sweeppeaTool",
+      "typeVersion": 1,
+      "position": [
+        480,
+        560
+      ],
+      "credentials": {
+        "sweeppeaApi": {
+          "id": "",
+          "name": "Sweeppea account"
+        }
+      },
+      "parameters": {
+        "resource": "participant",
+        "operation": "create",
+        "sweepstakesToken": "YOUR_SWEEPSTAKES_TOKEN",
+        "KeyEmail": "={{ $fromAI('email', 'Participant email address', 'string') }}",
+        "KeyPhoneNumber": "={{ $fromAI('phone', 'US mobile number, 10 digits', 'string') }}",
+        "CustomFields": "={{ JSON.stringify({ First_Name: $fromAI('firstName', 'First name', 'string'), Last_Name: $fromAI('lastName', 'Last name', 'string'), Email: $fromAI('email', 'Participant email address', 'string'), Mobile_Number: $fromAI('phone', 'US mobile number, 10 digits', 'string') }) }}",
+        "createOptions": {
+          "source": "chat"
+        }
+      }
+    },
+    {
+      "id": "save",
+      "name": "save_survey_answers",
+      "type": "n8n-nodes-base.dataTableTool",
+      "typeVersion": 1.1,
+      "position": [
+        640,
+        560
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "Café Aurora · Participants"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "firstName": "={{ $fromAI('firstName', 'First name', 'string') }}",
+            "lastName": "={{ $fromAI('lastName', 'Last name', 'string') }}",
+            "email": "={{ $fromAI('email', 'Email address', 'string') }}",
+            "phone": "={{ $fromAI('phone', 'US mobile number', 'string') }}",
+            "favoriteCoffee": "={{ $fromAI('favoriteCoffee', 'Favorite coffee drink', 'string') }}",
+            "coffeesPerWeek": "={{ $fromAI('coffeesPerWeek', 'Coffees per week', 'number') }}",
+            "source": "chat"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "firstName",
+              "displayName": "firstName",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "lastName",
+              "displayName": "lastName",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "phone",
+              "displayName": "phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "favoriteCoffee",
+              "displayName": "favoriteCoffee",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "coffeesPerWeek",
+              "displayName": "coffeesPerWeek",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "source",
+              "displayName": "source",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {},
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "email",
+              "condition": "eq",
+              "keyValue": "={{ $fromAI('email', 'Email address', 'string') }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "cnt",
+      "name": "count_entries",
+      "type": "n8n-nodes-sweeppea.sweeppeaTool",
+      "typeVersion": 1,
+      "position": [
+        800,
+        560
+      ],
+      "credentials": {
+        "sweeppeaApi": {
+          "id": "",
+          "name": "Sweeppea account"
+        }
+      },
+      "parameters": {
+        "resource": "participant",
+        "operation": "count",
+        "sweepstakesToken": "YOUR_SWEEPSTAKES_TOKEN"
+      }
+    }
+  ],
+  "connections": {
+    "Chat with Café Aurora": {
+      "main": [
+        [
+          {
+            "node": "Entry assistant",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Conversation memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Entry assistant",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "register_participant": {
+      "ai_tool": [
+        [
+          {
+            "node": "Entry assistant",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "save_survey_answers": {
+      "ai_tool": [
+        [
+          {
+            "node": "Entry assistant",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "count_entries": {
+      "ai_tool": [
+        [
+          {
+            "node": "Entry assistant",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MiniMax M3.1 (NVIDIA)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Entry assistant",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

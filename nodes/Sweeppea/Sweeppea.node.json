@@ -47,6 +47,15 @@
 		"promotional",
 		"campaign",
 		"participant",
-		"registration"
+		"registration",
+		"coupon",
+		"codes",
+		"survey",
+		"winner",
+		"drawing",
+		"sms",
+		"email",
+		"invoice",
+		"drip"
 	]
 }

@@ -29,7 +29,7 @@ export class SweeppeaApi implements ICredentialType {
 	name             = 'sweeppeaApi';
 	displayName      = 'Sweeppea API';
 	documentationUrl = 'https://apidocs.sweeppea.com';
-	icon: Icon       = 'file:sweeppea.svg';
+	icon: Icon       = { light: 'file:sweeppea.svg', dark: 'file:sweeppea.dark.svg' };
 
 	properties: INodeProperties[] = [
 		{

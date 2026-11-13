@@ -6,7 +6,7 @@
 	                    |_|  |_|
 
 	Platform  : Sweeppea N8N Integration
-	Version   : 0.2.0
+	Version   : 0.3.0
 	Path      : /nodes/Sweeppea/GenericFunctions.ts
 
 	(c) Sweeppea, all rights reserved.
@@ -19,6 +19,7 @@ import {
 	IHttpRequestOptions,
 	ILoadOptionsFunctions,
 	INode,
+	IPollFunctions,
 	INodeExecutionData,
 	JsonObject,
 	NodeApiError,
@@ -29,7 +30,7 @@ const PRODUCTION_BASE_URL = 'https://api-v3.sweeppea.com';
 const DEFAULT_DEV_BASE_URL = 'http://localhost:3002';
 
 /* Resolve The Base URL According To The Selected Environment */
-async function resolveBaseUrl(this: IExecuteFunctions | ILoadOptionsFunctions): Promise<string> {
+async function resolveBaseUrl(this: IExecuteFunctions | ILoadOptionsFunctions | IPollFunctions): Promise<string> {
 
 	const credentials = await this.getCredentials('sweeppeaApi');
 
@@ -47,7 +48,7 @@ async function resolveBaseUrl(this: IExecuteFunctions | ILoadOptionsFunctions): 
  * token (apiToken | apiKey) is injected by the credential provider
  */
 export async function sweeppeaApiRequest(
-	this: IExecuteFunctions | ILoadOptionsFunctions,
+	this: IExecuteFunctions | ILoadOptionsFunctions | IPollFunctions,
 	method: IHttpRequestMethods,
 	endpoint: string,
 	body: IDataObject = {},
@@ -196,6 +197,7 @@ export function mapApiError(
 	node: INode,
 	error: unknown,
 	itemIndex: number,
+	notFoundMessage?: string,
 ): NodeApiError | NodeOperationError {
 
 	if (error instanceof NodeOperationError || error instanceof NodeApiError) {
@@ -208,19 +210,24 @@ export function mapApiError(
 
 	if (httpCode === 404) {
 
+		/* v0.3 Operations Pass Their Own Message; v0.2 Ones Keep The Legacy Text */
 		return new NodeOperationError(
 			node,
-			'Sweepstake not found. Please verify the Sweepstakes Token is correct.',
+			notFoundMessage ?? 'Sweepstake not found. Please verify the Sweepstakes Token is correct.',
 			{ itemIndex },
 		);
 	}
 
-	if (httpCode === 400) {
+	/* 400 Validation, 403 Module Disabled / Plan Limit, 409 Conflict, 422 Unprocessable */
+	if (httpCode === 400 || httpCode === 403 || httpCode === 409 || httpCode === 422) {
 
 		const apiError = extractApiResponseBody(errorObj);
-		const message  = (apiError.Message || apiError.message || 'Validation failed') as string;
+		const message  = (apiError.Message || apiError.message) as string | undefined;
 
-		return new NodeOperationError(node, message, { itemIndex });
+		if (message || httpCode === 400) {
+
+			return new NodeOperationError(node, message || 'Validation failed', { itemIndex });
+		}
 	}
 
 	return new NodeApiError(node, errorObj, { itemIndex });

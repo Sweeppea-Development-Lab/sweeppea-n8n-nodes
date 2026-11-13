@@ -1,0 +1,382 @@
+{
+  "name": "Café Aurora · 5 · Draw winners and deliver prizes",
+  "nodes": [
+    {
+      "id": "t",
+      "name": "Drawing day",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        300
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "d",
+      "name": "Draw 3 winners",
+      "type": "n8n-nodes-sweeppea.sweeppea",
+      "typeVersion": 1,
+      "position": [
+        240,
+        300
+      ],
+      "credentials": {
+        "sweeppeaApi": {
+          "id": "",
+          "name": "Sweeppea account"
+        }
+      },
+      "parameters": {
+        "resource": "winner",
+        "operation": "draw",
+        "sweepstakesToken": "YOUR_SWEEPSTAKES_TOKEN",
+        "howManyWinnersToPick": 3,
+        "drawAdditionalFields": {
+          "doNotIncludeSpamParticipants": true
+        }
+      }
+    },
+    {
+      "id": "w",
+      "name": "Get the winners",
+      "type": "n8n-nodes-sweeppea.sweeppea",
+      "typeVersion": 1,
+      "position": [
+        480,
+        300
+      ],
+      "credentials": {
+        "sweeppeaApi": {
+          "id": "",
+          "name": "Sweeppea account"
+        }
+      },
+      "executeOnce": true,
+      "parameters": {
+        "resource": "winner",
+        "operation": "getMany",
+        "sweepstakesToken": "YOUR_SWEEPSTAKES_TOKEN",
+        "returnAll": true
+      }
+    },
+    {
+      "id": "k",
+      "name": "Pick 3 available prize codes",
+      "type": "n8n-nodes-sweeppea.sweeppea",
+      "typeVersion": 1,
+      "position": [
+        720,
+        300
+      ],
+      "credentials": {
+        "sweeppeaApi": {
+          "id": "",
+          "name": "Sweeppea account"
+        }
+      },
+      "parameters": {
+        "resource": "code",
+        "operation": "getMany",
+        "sweepstakesToken": "YOUR_SWEEPSTAKES_TOKEN",
+        "returnAll": false,
+        "limit": 3,
+        "catalogOptions": {
+          "Filter": "available",
+          "SortBy": "CreationDate",
+          "SortDesc": false
+        }
+      },
+      "executeOnce": true
+    },
+    {
+      "id": "a",
+      "name": "Assign code to winner",
+      "type": "n8n-nodes-sweeppea.sweeppea",
+      "typeVersion": 1,
+      "position": [
+        960,
+        300
+      ],
+      "credentials": {
+        "sweeppeaApi": {
+          "id": "",
+          "name": "Sweeppea account"
+        }
+      },
+      "parameters": {
+        "resource": "code",
+        "operation": "assign",
+        "couponToken": "={{ $('Pick 3 available prize codes').all()[$itemIndex].json.CouponToken }}",
+        "participantToken": "={{ $('Get the winners').all()[$itemIndex].json.ParticipantToken }}"
+      }
+    },
+    {
+      "id": "s",
+      "name": "Email the prize code",
+      "type": "n8n-nodes-sweeppea.sweeppea",
+      "typeVersion": 1,
+      "position": [
+        1200,
+        300
+      ],
+      "credentials": {
+        "sweeppeaApi": {
+          "id": "",
+          "name": "Sweeppea account"
+        }
+      },
+      "parameters": {
+        "resource": "code",
+        "operation": "send",
+        "couponToken": "={{ $('Pick 3 available prize codes').all()[$itemIndex].json.CouponToken }}",
+        "channel": "email",
+        "catalogOptions": {
+          "IdempotencyKey": "={{ 'aurora-prize-' + $('Pick 3 available prize codes').all()[$itemIndex].json.CouponCode }}"
+        }
+      }
+    },
+    {
+      "id": "m",
+      "name": "Send congratulations",
+      "type": "n8n-nodes-sweeppea.sweeppea",
+      "typeVersion": 1,
+      "position": [
+        1440,
+        300
+      ],
+      "credentials": {
+        "sweeppeaApi": {
+          "id": "",
+          "name": "Sweeppea account"
+        }
+      },
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "participantToken": "={{ $('Get the winners').all()[$itemIndex].json.ParticipantToken }}",
+        "channel": "email",
+        "message": "=Hi {{ $('Get the winners').all()[$itemIndex].json.EntryPagesFields.First_Name }}! ☕ You are one of the 3 winners of the Café Aurora Fall Coffee Giveaway: one year of free coffee.\n\nYour prize code is {{ $('Pick 3 available prize codes').all()[$itemIndex].json.CouponCode }}. Show it at any Café Aurora.\n\n(This is a demo message from an n8n workflow.)",
+        "catalogOptions": {
+          "Subject": "You won a year of free coffee ☕",
+          "IdempotencyKey": "={{ 'aurora-congrats-' + $('Pick 3 available prize codes').all()[$itemIndex].json.CouponCode }}"
+        }
+      }
+    },
+    {
+      "id": "u",
+      "name": "Mark winners in the sheet",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1680,
+        300
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "Café Aurora · Participants"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "email",
+              "condition": "eq",
+              "keyValue": "={{ $('Get the winners').all()[$itemIndex].json.KeyEmail }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "winner": true,
+            "prizeCode": "={{ $('Pick 3 available prize codes').all()[$itemIndex].json.CouponCode }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "winner",
+              "displayName": "winner",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "prizeCode",
+              "displayName": "prizeCode",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "c",
+      "name": "Count participants",
+      "type": "n8n-nodes-sweeppea.sweeppea",
+      "typeVersion": 1,
+      "position": [
+        1920,
+        300
+      ],
+      "credentials": {
+        "sweeppeaApi": {
+          "id": "",
+          "name": "Sweeppea account"
+        }
+      },
+      "parameters": {
+        "resource": "participant",
+        "operation": "count",
+        "sweepstakesToken": "YOUR_SWEEPSTAKES_TOKEN"
+      },
+      "executeOnce": true
+    },
+    {
+      "id": "n",
+      "name": "Save drawing report",
+      "type": "n8n-nodes-sweeppea.sweeppea",
+      "typeVersion": 1,
+      "position": [
+        2160,
+        300
+      ],
+      "credentials": {
+        "sweeppeaApi": {
+          "id": "",
+          "name": "Sweeppea account"
+        }
+      },
+      "parameters": {
+        "resource": "note",
+        "operation": "create",
+        "title": "=Café Aurora drawing report · {{ $now.toFormat('yyyy-MM-dd HH:mm:ss') }}",
+        "note": "=Café Aurora Fall Coffee Giveaway (demo)\nParticipants: {{ $json.Data.Counts.Total }}\n\nWinners and prize codes:\n{{ $('Get the winners').all().map((w, i) => '• ' + w.json.EntryPagesFields.First_Name + ' ' + w.json.EntryPagesFields.Last_Name + ' — ' + $('Pick 3 available prize codes').all()[i].json.CouponCode).join('\\n') }}",
+        "catalogOptions": {
+          "Pinned": true
+        }
+      },
+      "executeOnce": true
+    }
+  ],
+  "connections": {
+    "Drawing day": {
+      "main": [
+        [
+          {
+            "node": "Draw 3 winners",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Draw 3 winners": {
+      "main": [
+        [
+          {
+            "node": "Get the winners",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get the winners": {
+      "main": [
+        [
+          {
+            "node": "Pick 3 available prize codes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pick 3 available prize codes": {
+      "main": [
+        [
+          {
+            "node": "Assign code to winner",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Assign code to winner": {
+      "main": [
+        [
+          {
+            "node": "Email the prize code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email the prize code": {
+      "main": [
+        [
+          {
+            "node": "Send congratulations",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send congratulations": {
+      "main": [
+        [
+          {
+            "node": "Mark winners in the sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark winners in the sheet": {
+      "main": [
+        [
+          {
+            "node": "Count participants",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Count participants": {
+      "main": [
+        [
+          {
+            "node": "Save drawing report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

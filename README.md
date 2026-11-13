@@ -22,7 +22,7 @@ Follow the [installation guide](https://docs.n8n.io/integrations/community-nodes
 
 ## Operations
 
-The node groups operations into four resources. Every operation uses the same Sweeppea API V3 credential.
+Since v0.3.0 the node covers **every documented endpoint of the Sweeppea API V3** (115 endpoints): **21 resources, 117 operations**, plus a polling **Sweeppea Trigger**. Every operation uses the same Sweeppea API credential. Sweepstakes, groups and timezones are picked from dropdowns loaded from your account (or set with an expression).
 
 ### Participant
 
@@ -30,6 +30,7 @@ The node groups operations into four resources. Every operation uses the same Sw
 - **Create** — Register a new participant in a sweepstake with dynamic field support
 - **Delete** — Remove a participant by `ParticipantToken`
 - **Get** — Fetch a single participant by email, phone or token
+- **Update Bonus Entries** — Set the bonus entries of a participant *(new in 0.3.0)*
 - **Get Form Fields** — Retrieve the dynamic entry form fields for a sweepstake (useful for building chatbots or dynamic forms)
 - **Get Many** — Paginated list of participants with search and date filters
 
@@ -37,6 +38,7 @@ The node groups operations into four resources. Every operation uses the same Sw
 
 - **Clone** — Duplicate an existing sweepstake (by Handler) with new dates and a new Handler
 - **Create** — Create a new sweepstake (SMS / Email / Social) with handler and date window
+- **Delete** — Permanently delete a sweepstake and all its data *(new in 0.3.0)*
 - **Get Many** — Fetch every sweepstake on the authenticated account
 - **Pause** — Pause an active sweepstake
 - **Unpause** — Re-activate a paused sweepstake
@@ -46,10 +48,51 @@ The node groups operations into four resources. Every operation uses the same Sw
 
 - **Draw** — Pick N winners using the weighted random algorithm, with optional group / spam / opt-out filters
 - **Get Many** — Paginated list of previously drawn winners with optional search
+- **Schedule Drawing**, **Get Scheduled Drawings**, **Delete Scheduled Drawing** — Automatic (optionally recurring) drawings *(new in 0.3.0)*
 
 ### Rule
 
 - **Create** — Submit an official rules HTML document for a sweepstake (first one is marked primary)
+- **Create With Wizard**, **Get Many**, **Update**, **Delete** *(new in 0.3.0)*
+
+### New resources in 0.3.0
+
+| Resource | Operations |
+|---|---|
+| **Account** | Get Profile, Get Business Info, Get Plan, Health Check |
+| **Billing** | Get Transactions, Get Consumptions, Get Data Transfer, Get Wallet Transactions |
+| **Calendar Event** | Create, Get, Get Many, Update, Delete |
+| **Code** (codes & coupons) | Create, Generate, Get, Get Many, Get Stats, Get Settings, Update, Update Settings, Assign, Unassign, Redeem, Unredeem, Send to Participant, Delete |
+| **Drip Campaign** | Get, Get Many, Get Report, Get Enrollments, Pause, Resume, Remove Contact |
+| **Entry Page** | Get Form Fields, Get Settings, Update Settings (texts, opt-ins, age gate, AMOE, widgets) |
+| **File** (Sweeppea Drive) | Upload (from an n8n binary), Download (to an n8n binary), Get URL, Get Many, Send by Email, Delete |
+| **Group** | Create, Get Many, Rename, Delete |
+| **Invoice** | Create, Get, Get Many, Update (publish / cancel), Delete |
+| **Message** | Send to Participant (email / SMS), Get Usage |
+| **Messaging Campaign** | Get, Get Many, Get Report, Get Recipients, Pause, Resume, Cancel |
+| **Note** | Create, Get, Get Many, Update, Delete |
+| **Reference Data** | Timezones, US States, Countries, Zip Codes, Area Codes, Documentation |
+| **Support Ticket** | Create, Get, Get Many Open, Get Many Closed, Update, Resolve, Delete |
+| **Suppression** | Add, Get Many, Remove |
+| **Survey** | Create, Get, Get Many, Get Responses, Get Report, Update, Delete |
+| **To-Do** | Create, Get Many, Update, Delete (update and delete need an admin API key) |
+
+List operations return one n8n item per record. Paginated ones offer **Return All** / **Limit** and page through the API for you. Delete operations return `deleted: true` plus the API response. In **Update Fields**, a text field that is added but left empty clears the value.
+
+### Sweeppea Trigger
+
+A polling trigger that starts a workflow when a sweepstake gets a **New Participant**, a **New Winner**, or a survey gets a **New Survey Response**. The first activation only records a baseline (existing records are not replayed); after that each new record is emitted exactly once, oldest first. **Fetch Test Event** returns the most recent record without touching the trigger state.
+
+### API surface decisions
+
+- The node follows the endpoint pages of [apidocs.sweeppea.com](https://apidocs.sweeppea.com). Where the downloadable `openapi.json` differs from those pages (support tickets, to-dos, documentation, lookups, the rules wizard, HTTP methods), the pages win; every operation was checked against the live API.
+- Drip campaigns and messaging campaigns can be read, paused, resumed and cancelled, but **not created or edited**: the API omits those writes on purpose, and they are done in the Sweeppea app.
+- The node does **not** run the legal guardrails of the Sweeppea MCP server (AMOE, minimum age, alcohol 21+). Review rules-wizard answers and entry-page settings yourself before running a workflow, especially when an AI Agent drives the node.
+
+### Known API issues (November 2026)
+
+- **Group → Delete** returns HTTP 500 from the API for every request (POST, any casing). The node sends the documented body; the fix is server-side.
+- **Sweepstake → Pause** returns HTTP 500 for a sweepstake whose start date is in the future; it works once the sweepstake has started.
 
 ## Credentials
 
@@ -72,7 +115,7 @@ The credential is tested against `POST /account/health-check`.
 ## Compatibility
 
 - Requires **Node.js 22.16+**
-- Tested with **n8n 2.20.x** and **n8n-workflow 2.16.x**
+- Tested with **n8n 2.47.5** (November 2026)
 - Supports the n8n AI Agent through the `usableAsTool` flag
 
 ## Usage
@@ -146,7 +189,7 @@ Then add a Sweeppea node to an AI Agent's tool list — n8n will expose every op
 
 ### Advanced: connect the MCP Client Tool
 
-For Tier 2/3 operations not exposed by this node (Groups, Files, Notes, Calendar, Tickets, Billing, etc.) Sweeppea publishes a Streamable-HTTP MCP server at **`https://mcp.sweeppea.com`** (71 tools, v1.17.0+).
+Since v0.3.0 this node covers every documented API endpoint. For conversational use with server-side legal guardrails (AMOE, minimum age, alcohol 21+), Sweeppea also publishes a Streamable-HTTP MCP server at **`https://mcp.sweeppea.com`** (116 tools as of v1.23).
 
 In n8n, add an **MCP Client Tool** node to your AI Agent with:
 
@@ -154,7 +197,7 @@ In n8n, add an **MCP Client Tool** node to your AI Agent with:
 - **Transport:** Streamable HTTP
 - **Auth:** Bearer (your Sweeppea API token, same one you use for the credential here)
 
-The MCP Client and the Sweeppea node coexist — use the node for the deterministic Tier 1 flows above and the MCP for everything else, especially conversational / admin tasks.
+The MCP Client and the Sweeppea node coexist — use the node for deterministic workflow steps and the MCP for conversational / admin tasks that benefit from its guardrails.
 
 ## Example workflows
 
@@ -283,6 +326,18 @@ For the sweepstake **owner**, not for participants. Five Sweeppea tools attached
 
 The system prompt instructs the agent to confirm before any destructive action ("Are you sure you want to draw 3 winners from sweep X?") and to refer to sweeps by their handler/name rather than just the token. Run it against a test sweepstake until you trust the conversation flow.
 
+### 7. Café Aurora — a full campaign, end to end (v0.3.0)
+
+**Folder:** `examples/cafe-aurora/` — five workflows that run a complete (fictitious) coffee-shop giveaway:
+
+1. `1-launch-the-campaign.json` — creates the sweepstake, a VIP group, the official rules, 10 prize codes, a calendar event and a team to-do, in one run.
+2. `2-chat-entry-with-ai.json` — a public hosted chat where an AI Agent collects name, email and phone, asks two survey questions, confirms age and rules acceptance, registers the participant (`Participant → Create` as a tool) and saves the answers to an n8n Data Table (upsert by email, so a retried turn never duplicates a row).
+3. `3-kiosk-entries.json` — a batch of walk-in entries (kiosk / POS import) registered in Sweeppea and saved to the same Data Table.
+4. `4-live-participants-sheet.json` — the **Sweeppea Trigger** (New Participant) keeps the Data Table in sync with every new entry, whatever channel it came from.
+5. `5-draw-winners-and-deliver-prizes.json` — draws 3 winners, assigns each one an available prize code, emails the code (`Code → Send to Participant`) and a personal congratulation (`Message → Send to Participant`), marks the winners in the Data Table and saves a pinned drawing report as a Sweeppea note.
+
+After importing: select your Sweeppea credential, replace `YOUR_SWEEPSTAKES_TOKEN` (workflows 2–5) with the token created by workflow 1, create a Data Table named `Café Aurora · Participants` (columns: firstName, lastName, email, phone, favoriteCoffee, coffeesPerWeek, source, participantToken, winner, prizeCode) and pick it in the Data Table nodes, and connect any tool-calling chat model to the AI Agent.
+
 ### Dev-mode note
 
 If you're testing one of these workflows under `n8n-node dev` (the local development mode of `@n8n/node-cli`), n8n registers the package under the `CUSTOM.` namespace instead of `n8n-nodes-sweeppea.`. After importing, do a find-replace in the workflow JSON:
@@ -290,6 +345,7 @@ If you're testing one of these workflows under `n8n-node dev` (the local develop
 ```
 n8n-nodes-sweeppea.sweeppea     → CUSTOM.sweeppea
 n8n-nodes-sweeppea.sweeppeaTool → CUSTOM.sweeppeaTool
+n8n-nodes-sweeppea.sweeppeaTrigger → CUSTOM.sweeppeaTrigger
 ```
 
 Users who install the node via `npm i n8n-nodes-sweeppea` don't need this — the published types work directly.
@@ -302,6 +358,18 @@ Users who install the node via `npm i n8n-nodes-sweeppea` don't need this — th
 - [Sweeppea MCP Server Documentation](https://mcpdocs.sweeppea.com)
 
 ## Version history
+
+### 0.3.0
+
+- **Full API coverage**: 17 new resources and 102 new operations (117 in total, covering all 115 documented endpoints) — accounts, billing, calendar, codes & coupons, drip and messaging campaigns, entry page settings, Drive files (binary upload and download), groups, invoices, one-to-one messages, notes, reference data, support tickets, suppressions, surveys, to-dos, bonus entries, scheduled drawings and the rules wizard. See [Operations](#operations).
+- **New node: Sweeppea Trigger** (polling) — New Participant, New Winner, New Survey Response.
+- Dropdowns loaded from the account for sweepstakes, groups and timezones.
+- Light and dark icons.
+- List operations return one item per record; paginated ones support Return All / Limit.
+- Clearer errors: 404s name the missing resource, and 403 / 409 / 422 responses surface the API message (for example "module is not enabled").
+- New example: [Café Aurora](#7-café-aurora--a-full-campaign-end-to-end-v030), a complete campaign in five workflows.
+- Backwards compatible: the 15 operations of v0.2, their parameter names, defaults, payloads and the credential are unchanged; v0.1 / v0.2 workflows import and run as before.
+- Toolchain: `@n8n/node-cli` 0.56.3, `release-it` 21, Node 24 in CI (`.nvmrc`).
 
 ### 0.2.3
 
