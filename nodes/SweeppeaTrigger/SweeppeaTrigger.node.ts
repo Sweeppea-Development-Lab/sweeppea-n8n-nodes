@@ -26,11 +26,14 @@ import { sweeppeaApiRequest } from '../Sweeppea/GenericFunctions';
 import { extractList } from '../Sweeppea/operations/catalog';
 import { getSweepstakes } from '../Sweeppea/methods/loadOptions';
 
-/* How Many IDs Are Remembered Between Polls (Per Trigger Node) */
+/* How Many IDs Are Remembered Between Polls (Per Trigger Node); The Newest Are Kept */
 const SEEN_LIMIT = 1000;
 
-/* Pages Read Per Poll While Every Item Is New (Burst Protection) */
-const MAX_PAGES_PER_POLL = 10;
+/*
+ * Safety Net Only: A Poll Reads Back Until It Reaches An Item Already Seen (Or The Last Page),
+ * So A Burst Between Polls Is Drained In Full. 500 Pages = 10,000 Participants / 50,000 Winners
+ */
+const MAX_PAGES_PER_POLL = 500;
 
 interface EventDefinition {
 	endpoint   : string;
@@ -220,9 +223,16 @@ export class SweeppeaTrigger implements INodeType {
 			}
 		}
 
+		/* The API Lists Newest First; Oldest First From Here On, So Downstream Order Is Chronological */
+		fresh.reverse();
+
+		/* Oldest → Newest, So The Trim Below Keeps The Newest IDs (The Ones The Next Poll Meets First) */
 		for (const row of fresh) {
 
-			seen.add(itemId(row, definition.idKeys));
+			const id = itemId(row, definition.idKeys);
+
+			seen.delete(id);
+			seen.add(id);
 		}
 
 		staticData.seen = Array.from(seen).slice(-SEEN_LIMIT);
@@ -233,7 +243,6 @@ export class SweeppeaTrigger implements INodeType {
 			return null;
 		}
 
-		/* The API Lists Newest First; Emit Oldest First So Downstream Order Is Chronological */
-		return [fresh.reverse().map(_row => ({ json: _row }))];
+		return [fresh.map(_row => ({ json: _row }))];
 	}
 }
